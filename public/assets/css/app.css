@@ -40,14 +40,15 @@
   --gold-line: rgba(110, 83, 36, 0.35);
   --gold-soft: rgba(201, 164, 106, 0.18);
   --cream: #1a140c;
-  --muted: #5c4e3a;
+  /* Darker secondary copy for readability on cream */
+  --muted: #3a3228;
   --bg: #efe6d4;
   --text: #1a140c;
-  --text-muted: #5c4e3a;
+  --text-muted: #3a3228;
   --accent: #8a6a32;
   --border: rgba(110, 83, 36, 0.35);
-  --card-bg: rgba(255, 252, 246, 0.82);
-  --header-bg: rgba(247, 241, 230, 0.86);
+  --card-bg: rgba(255, 252, 246, 0.92);
+  --header-bg: rgba(247, 241, 230, 0.9);
 }
 
 *,
@@ -304,6 +305,10 @@ body.page-hoy .site-header {
   filter: contrast(1.06) saturate(1.1) brightness(1.05);
 }
 
+[data-theme="light"] .mystic-portrait {
+  filter: contrast(1.12) saturate(1.15) brightness(1.02);
+}
+
 .hoy-art-fade {
   position: absolute;
   inset: 0;
@@ -314,9 +319,10 @@ body.page-hoy .site-header {
 }
 
 [data-theme="light"] .hoy-art-fade {
+  /* Narrow, clean edge blend — no wide gray haze over the portrait */
   background:
-    linear-gradient(90deg, transparent 75%, rgba(239, 230, 212, 0.75) 100%),
-    linear-gradient(180deg, rgba(239, 230, 212, 0.2) 0%, transparent 20%, transparent 80%, rgba(239, 230, 212, 0.45) 100%);
+    linear-gradient(90deg, transparent 88%, rgba(239, 230, 212, 0.35) 96%, rgba(239, 230, 212, 0.92) 100%),
+    linear-gradient(180deg, rgba(239, 230, 212, 0.12) 0%, transparent 10%, transparent 90%, rgba(239, 230, 212, 0.2) 100%);
 }
 
 .hoy-art-glow {
@@ -326,6 +332,11 @@ body.page-hoy .site-header {
   background: radial-gradient(ellipse at center, rgba(201, 164, 106, 0.2), transparent 70%);
   filter: blur(18px);
   pointer-events: none;
+}
+
+[data-theme="light"] .hoy-art-glow {
+  opacity: 0.35;
+  filter: blur(12px);
 }
 
 .hoy-content {
@@ -426,6 +437,10 @@ body.page-hoy .site-header {
     linear-gradient(120deg, rgba(201, 164, 106, 0.08), transparent 45%),
     var(--card-bg);
   box-shadow: 0 18px 40px rgba(0, 0, 0, 0.25);
+}
+
+[data-theme="light"] .moon-card {
+  box-shadow: 0 4px 14px rgba(40, 30, 15, 0.08);
 }
 
 .moon-card-art {
@@ -611,6 +626,19 @@ body.page-hoy .site-header {
   font-size: clamp(0.8rem, 1.25vh, 0.9rem);
   line-height: 1.5;
   color: var(--text-muted);
+}
+
+[data-theme="light"] .planet-note,
+[data-theme="light"] .moon-blurb,
+[data-theme="light"] .planet-sign,
+[data-theme="light"] .hoy-sub,
+[data-theme="light"] .sky-source {
+  color: #2e2820;
+  opacity: 1;
+}
+
+[data-theme="light"] .sky-source.is-mock {
+  color: #5a4a2e;
 }
 
 .planet-grid-primary .planet-note {
