@@ -39,16 +39,16 @@
   --gold-dim: #a88850;
   --gold-line: rgba(110, 83, 36, 0.35);
   --gold-soft: rgba(201, 164, 106, 0.18);
-  --cream: #1a140c;
-  /* Darker secondary copy for readability on cream */
-  --muted: #3a3228;
+  --cream: #14110e;
+  /* Near-ink secondary copy — readable on cream/white */
+  --muted: #2a241c;
   --bg: #efe6d4;
-  --text: #1a140c;
-  --text-muted: #3a3228;
+  --text: #14110e;
+  --text-muted: #1a1612;
   --accent: #8a6a32;
   --border: rgba(110, 83, 36, 0.35);
-  --card-bg: rgba(255, 252, 246, 0.92);
-  --header-bg: rgba(247, 241, 230, 0.9);
+  --card-bg: #fffcf6;
+  --header-bg: rgba(247, 241, 230, 0.94);
 }
 
 *,
@@ -306,15 +306,16 @@ body.page-hoy .site-header {
 }
 
 [data-theme="light"] .mystic-portrait {
-  filter: contrast(1.14) saturate(1.18) brightness(1.03);
-  /* Fade image alpha into cream panel — avoids muddy gray overlay */
-  -webkit-mask-image: linear-gradient(90deg, #000 0%, #000 90%, rgba(0, 0, 0, 0.35) 96%, transparent 100%);
-  mask-image: linear-gradient(90deg, #000 0%, #000 90%, rgba(0, 0, 0, 0.35) 96%, transparent 100%);
+  filter: contrast(1.16) saturate(1.2) brightness(1.02);
+  /* No alpha fade — hard edge into cream (no gray fog band) */
+  -webkit-mask-image: none;
+  mask-image: none;
 }
 
 [data-theme="light"] .hoy-art,
 [data-theme="light"] .hoy-art-frame {
   background: var(--void);
+  border-right: 1px solid rgba(138, 106, 50, 0.28);
 }
 
 .hoy-art-fade {
@@ -327,8 +328,8 @@ body.page-hoy .site-header {
 }
 
 [data-theme="light"] .hoy-art-fade {
-  /* Soft cream kiss only at the extreme edge */
-  background: linear-gradient(90deg, transparent 92%, rgba(239, 230, 212, 0.55) 100%);
+  /* Hard edge into cream UI — no fog strip */
+  background: none;
 }
 
 .hoy-art-glow {
@@ -445,7 +446,12 @@ body.page-hoy .site-header {
 }
 
 [data-theme="light"] .moon-card {
-  box-shadow: 0 4px 14px rgba(40, 30, 15, 0.08);
+  /* Match resting planet cards — no extra elevation */
+  box-shadow: none;
+}
+
+[data-theme="light"] .planet-card:hover {
+  box-shadow: 0 6px 16px rgba(40, 30, 15, 0.1);
 }
 
 .moon-card-art {
@@ -636,14 +642,24 @@ body.page-hoy .site-header {
 [data-theme="light"] .planet-note,
 [data-theme="light"] .moon-blurb,
 [data-theme="light"] .planet-sign,
+[data-theme="light"] .planet-degree,
 [data-theme="light"] .hoy-sub,
+[data-theme="light"] .brand-tagline,
+[data-theme="light"] .nav-link,
 [data-theme="light"] .sky-source {
-  color: #2e2820;
+  color: #1a1612;
   opacity: 1;
 }
 
-[data-theme="light"] .sky-source.is-mock {
-  color: #5a4a2e;
+[data-theme="light"] .nav-link.is-muted {
+  color: #2a241c;
+  opacity: 0.55;
+}
+
+[data-theme="light"] .sky-source.is-mock,
+[data-theme="light"] .sky-source.is-live {
+  color: #2a241c;
+  border-color: rgba(110, 83, 36, 0.45);
 }
 
 .planet-grid-primary .planet-note {
