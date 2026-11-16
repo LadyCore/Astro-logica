@@ -307,25 +307,14 @@ body.page-hoy .site-header {
   filter: contrast(1.06) saturate(1.1) brightness(1.05);
 }
 
-.mystic-portrait--light {
-  display: none;
-}
-
-[data-theme="light"] .mystic-portrait--dark {
-  display: none;
-}
-
-[data-theme="light"] .mystic-portrait--light {
-  display: block;
-  filter: contrast(1.06) saturate(1.08) brightness(1.01);
-  /* Gentle right-edge blend into cream content (asset void already cream) */
-  -webkit-mask-image: linear-gradient(90deg, #000 0%, #000 86%, transparent 100%);
-  mask-image: linear-gradient(90deg, #000 0%, #000 86%, transparent 100%);
+/* Light: same navy cosmic profile; soft right fade into cream UI */
+[data-theme="light"] .mystic-portrait {
+  filter: contrast(1.08) saturate(1.12) brightness(1.02);
 }
 
 [data-theme="light"] .hoy-art,
 [data-theme="light"] .hoy-art-frame {
-  background: var(--void);
+  background: #010c1d;
 }
 
 .hoy-art-fade {
@@ -338,10 +327,9 @@ body.page-hoy .site-header {
 }
 
 [data-theme="light"] .hoy-art-fade {
-  /* Warm cream soft fade (not cool gray haze) */
+  /* Soft cream edge into content — navy void stays */
   background:
-    linear-gradient(90deg, transparent 78%, rgba(247, 241, 230, 0.35) 90%, rgba(239, 230, 212, 0.92) 100%),
-    linear-gradient(180deg, rgba(247, 241, 230, 0.1) 0%, transparent 12%, transparent 88%, rgba(239, 230, 212, 0.18) 100%);
+    linear-gradient(90deg, transparent 76%, rgba(247, 241, 230, 0.28) 88%, rgba(239, 230, 212, 0.88) 100%);
 }
 
 .hoy-art-glow {
@@ -354,8 +342,7 @@ body.page-hoy .site-header {
 }
 
 [data-theme="light"] .hoy-art-glow {
-  opacity: 0.4;
-  filter: blur(14px);
+  opacity: 0.55;
 }
 
 .hoy-content {
