@@ -134,21 +134,23 @@ $interpretations = [
     ],
 ];
 
-$primaryIds = ['sun', 'moon', 'mercury', 'venus', 'mars', 'jupiter', 'saturn'];
-$primary = [];
-$secondary = [];
+/* Six above-fold cards (2×3) fill height cleanly; Saturno leads the scroll row with outers */
+$primaryIds = ['sun', 'moon', 'mercury', 'venus', 'mars', 'jupiter'];
+$secondaryOrder = ['saturn', 'uranus', 'neptune', 'pluto'];
+$byId = [];
 foreach ($sky->bodies as $body) {
-    $id = strtolower($body->id);
-    if (in_array($id, $primaryIds, true)) {
-        $primary[$id] = $body;
-    } else {
-        $secondary[] = $body;
-    }
+    $byId[strtolower($body->id)] = $body;
 }
 $orderedPrimary = [];
 foreach ($primaryIds as $id) {
-    if (isset($primary[$id])) {
-        $orderedPrimary[] = $primary[$id];
+    if (isset($byId[$id])) {
+        $orderedPrimary[] = $byId[$id];
+    }
+}
+$secondary = [];
+foreach ($secondaryOrder as $id) {
+    if (isset($byId[$id])) {
+        $secondary[] = $byId[$id];
     }
 }
 
@@ -183,53 +185,55 @@ $interpFor = static function ($body) use ($interpretations): string {
   </aside>
 
   <section class="hoy-content">
-    <header class="hoy-heading">
-      <p class="hoy-date"><?= htmlspecialchars($momentLabel, ENT_QUOTES, 'UTF-8') ?></p>
-      <h1 class="hoy-title">Cielo del día</h1>
-      <p class="hoy-sub">La astrología de hoy, interpretada para ti.</p>
-      <p class="sky-source <?= $usingLiveApi ? 'is-live' : 'is-mock' ?>">
-        <?= $usingLiveApi ? 'FreeAstroAPI · en vivo' : 'Datos demo · sin API key' ?>
-      </p>
-    </header>
+    <div class="hoy-stack">
+      <header class="hoy-heading">
+        <p class="hoy-date"><?= htmlspecialchars($momentLabel, ENT_QUOTES, 'UTF-8') ?></p>
+        <h1 class="hoy-title">Cielo del día</h1>
+        <p class="hoy-sub">La astrología de hoy, interpretada para ti.</p>
+        <p class="sky-source <?= $usingLiveApi ? 'is-live' : 'is-mock' ?>">
+          <?= $usingLiveApi ? 'FreeAstroAPI · en vivo' : 'Datos demo · sin API key' ?>
+        </p>
+      </header>
 
-    <article class="moon-card" data-phase="<?= htmlspecialchars($phase->slug, ENT_QUOTES, 'UTF-8') ?>">
-      <div class="moon-card-art" aria-hidden="true">
-        <div class="moon-illustration">
-          <span class="moon-disc"></span>
-          <span class="moon-crater c1"></span>
-          <span class="moon-crater c2"></span>
-          <span class="moon-crater c3"></span>
-        </div>
-      </div>
-      <div class="moon-card-copy">
-        <p class="eyebrow">Fase lunar</p>
-        <h2><?= htmlspecialchars($phaseLabel, ENT_QUOTES, 'UTF-8') ?></h2>
-        <p class="moon-blurb"><?= htmlspecialchars($phaseBlurb, ENT_QUOTES, 'UTF-8') ?></p>
-        <p class="moon-quote"><span class="heart" aria-hidden="true">♥</span> <?= htmlspecialchars($phaseQuote, ENT_QUOTES, 'UTF-8') ?></p>
-      </div>
-    </article>
-
-    <div class="planet-grid" aria-label="Posiciones planetarias">
-      <?php foreach ($orderedPrimary as $body):
-        $bid = strtolower($body->id);
-        $sid = strtolower($body->signId);
-        $nameEs = $bodyEs[$bid] ?? $body->name;
-        $signName = $signEs[$sid] ?? $body->sign;
-        ?>
-        <article class="planet-card">
-          <div class="planet-card-top">
-            <span class="planet-glyph"><?= $bodyGlyphs[$bid] ?? '·' ?></span>
-            <h3><?= htmlspecialchars($nameEs, ENT_QUOTES, 'UTF-8') ?></h3>
+      <article class="moon-card" data-phase="<?= htmlspecialchars($phase->slug, ENT_QUOTES, 'UTF-8') ?>">
+        <div class="moon-card-art" aria-hidden="true">
+          <div class="moon-illustration">
+            <span class="moon-disc"></span>
+            <span class="moon-crater c1"></span>
+            <span class="moon-crater c2"></span>
+            <span class="moon-crater c3"></span>
           </div>
-          <p class="planet-sign">
-            <span class="sign-glyph"><?= $signGlyphs[$sid] ?? '' ?></span>
-            <?= htmlspecialchars($signName, ENT_QUOTES, 'UTF-8') ?>
-            <?php if ($body->retrograde): ?><span class="rx">Rx</span><?php endif; ?>
-          </p>
-          <p class="planet-degree"><?= htmlspecialchars($body->degreeFormatted(), ENT_QUOTES, 'UTF-8') ?></p>
-          <p class="planet-note"><?= htmlspecialchars($interpFor($body), ENT_QUOTES, 'UTF-8') ?></p>
-        </article>
-      <?php endforeach; ?>
+        </div>
+        <div class="moon-card-copy">
+          <p class="eyebrow">Fase lunar</p>
+          <h2><?= htmlspecialchars($phaseLabel, ENT_QUOTES, 'UTF-8') ?></h2>
+          <p class="moon-blurb"><?= htmlspecialchars($phaseBlurb, ENT_QUOTES, 'UTF-8') ?></p>
+          <p class="moon-quote"><span class="heart" aria-hidden="true">♥</span> <?= htmlspecialchars($phaseQuote, ENT_QUOTES, 'UTF-8') ?></p>
+        </div>
+      </article>
+
+      <div class="planet-grid planet-grid-primary" aria-label="Posiciones planetarias">
+        <?php foreach ($orderedPrimary as $body):
+          $bid = strtolower($body->id);
+          $sid = strtolower($body->signId);
+          $nameEs = $bodyEs[$bid] ?? $body->name;
+          $signName = $signEs[$sid] ?? $body->sign;
+          ?>
+          <article class="planet-card">
+            <div class="planet-card-top">
+              <span class="planet-glyph"><?= $bodyGlyphs[$bid] ?? '·' ?></span>
+              <h3><?= htmlspecialchars($nameEs, ENT_QUOTES, 'UTF-8') ?></h3>
+            </div>
+            <p class="planet-sign">
+              <span class="sign-glyph"><?= $signGlyphs[$sid] ?? '' ?></span>
+              <?= htmlspecialchars($signName, ENT_QUOTES, 'UTF-8') ?>
+              <?php if ($body->retrograde): ?><span class="rx">Rx</span><?php endif; ?>
+            </p>
+            <p class="planet-degree"><?= htmlspecialchars($body->degreeFormatted(), ENT_QUOTES, 'UTF-8') ?></p>
+            <p class="planet-note"><?= htmlspecialchars($interpFor($body), ENT_QUOTES, 'UTF-8') ?></p>
+          </article>
+        <?php endforeach; ?>
+      </div>
     </div>
 
     <?php if ($secondary !== []): ?>
