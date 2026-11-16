@@ -180,7 +180,7 @@ $interpFor = static function ($body) use ($interpretations): string {
         decoding="async"
       >
       <img
-        src="/assets/img/mystic-woman-profile-light.jpg"
+        src="/assets/img/mystic-woman-profile-light.jpg?v=cream-integrated1"
         alt=""
         class="mystic-portrait mystic-portrait--light"
         width="768"
