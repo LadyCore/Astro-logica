@@ -172,7 +172,7 @@ $interpFor = static function ($body) use ($interpretations): string {
   <aside class="hoy-art" aria-hidden="true">
     <div class="hoy-art-frame">
       <img
-        src="/assets/img/mystic-woman.jpg"
+        src="/assets/img/mystic-woman-profile.jpg"
         alt=""
         class="mystic-portrait"
         width="768"

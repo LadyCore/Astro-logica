@@ -292,9 +292,10 @@ body.page-hoy .site-header {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  object-position: 52% 10%;
-  transform: scale(1.02);
-  filter: contrast(1.08) saturate(1.12) brightness(1.08);
+  /* Profile faces right — bias crop toward face + gold lips/nails */
+  object-position: 68% 18%;
+  transform: scale(1.03);
+  filter: contrast(1.06) saturate(1.1) brightness(1.05);
 }
 
 .hoy-art-fade {
