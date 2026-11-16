@@ -308,8 +308,8 @@ body.page-hoy .site-header {
 [data-theme="light"] .mystic-portrait {
   filter: contrast(1.14) saturate(1.18) brightness(1.03);
   /* Fade image alpha into cream panel — avoids muddy gray overlay */
-  -webkit-mask-image: linear-gradient(90deg, #000 0%, #000 84%, transparent 100%);
-  mask-image: linear-gradient(90deg, #000 0%, #000 84%, transparent 100%);
+  -webkit-mask-image: linear-gradient(90deg, #000 0%, #000 90%, rgba(0, 0, 0, 0.35) 96%, transparent 100%);
+  mask-image: linear-gradient(90deg, #000 0%, #000 90%, rgba(0, 0, 0, 0.35) 96%, transparent 100%);
 }
 
 [data-theme="light"] .hoy-art,
