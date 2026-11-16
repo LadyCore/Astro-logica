@@ -279,7 +279,7 @@ body.page-hoy .site-header {
   min-height: 0;
   height: 100%;
   padding: 0;
-  border-right: 1px solid rgba(201, 164, 106, 0.28);
+  border-right: none;
   background: #010c1d;
 }
 
