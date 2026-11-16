@@ -4,16 +4,20 @@
   --font-display: "Cormorant Garamond", "Times New Roman", serif;
   --font-body: "Manrope", "Segoe UI", sans-serif;
 
-  --void: #05060a;
-  --ink: #0a0c14;
-  --panel: rgba(12, 14, 22, 0.55);
+  /* Sampled from mystic profile art — deep navy / nebula, not flat black */
+  --void: #010c1d;
+  --ink: #0a1422;
+  --nebula: #101722;
+  --nebula-mid: #0d1420;
+  --nebula-lift: #161c26;
+  --panel: rgba(8, 16, 29, 0.55);
   --gold: #c9a46a;
   --gold-bright: #e4c48a;
   --gold-dim: #8a7348;
   --gold-line: rgba(201, 164, 106, 0.45);
   --gold-soft: rgba(201, 164, 106, 0.12);
-  --cream: #f3ead7;
-  --muted: #a89b82;
+  --cream: #e8eef6;
+  --muted: #9aa8bb;
   --rx: #d4a574;
 
   --bg: var(--void);
@@ -21,8 +25,8 @@
   --text-muted: var(--muted);
   --accent: var(--gold);
   --border: var(--gold-line);
-  --card-bg: rgba(8, 10, 16, 0.72);
-  --header-bg: rgba(5, 6, 10, 0.78);
+  --card-bg: rgba(4, 14, 29, 0.72);
+  --header-bg: rgba(1, 12, 29, 0.82);
   --ease: cubic-bezier(0.22, 1, 0.36, 1);
 }
 
@@ -94,9 +98,10 @@ img { max-width: 100%; display: block; }
   z-index: -1;
   pointer-events: none;
   background:
-    radial-gradient(ellipse 70% 50% at 15% 40%, rgba(201, 164, 106, 0.08), transparent 55%),
-    radial-gradient(ellipse 50% 40% at 85% 20%, rgba(80, 100, 160, 0.12), transparent 50%),
-    linear-gradient(180deg, #05060a 0%, #0a0d16 55%, #07080e 100%);
+    radial-gradient(ellipse 65% 55% at 18% 45%, rgba(16, 35, 58, 0.55), transparent 58%),
+    radial-gradient(ellipse 50% 40% at 78% 18%, rgba(20, 40, 70, 0.28), transparent 55%),
+    radial-gradient(ellipse 40% 35% at 70% 80%, rgba(201, 164, 106, 0.06), transparent 50%),
+    linear-gradient(165deg, #000b1b 0%, #010c1d 35%, #0a1422 70%, #020d1d 100%);
 }
 
 [data-theme="light"] .cosmic-bg {
@@ -273,7 +278,8 @@ body.page-hoy .site-header {
   min-height: 0;
   height: 100%;
   padding: 0;
-  border-right: 1px solid var(--gold-line);
+  border-right: 1px solid rgba(201, 164, 106, 0.28);
+  background: #010c1d;
 }
 
 .hoy-art-frame {
@@ -284,7 +290,7 @@ body.page-hoy .site-header {
   border-radius: 0;
   overflow: hidden;
   border: none;
-  background: #000;
+  background: #010c1d;
   box-shadow: none;
 }
 
@@ -302,8 +308,8 @@ body.page-hoy .site-header {
   position: absolute;
   inset: 0;
   background:
-    linear-gradient(90deg, transparent 78%, rgba(5, 6, 10, 0.55) 100%),
-    linear-gradient(180deg, rgba(5, 6, 10, 0.25) 0%, transparent 18%, transparent 82%, rgba(5, 6, 10, 0.35) 100%);
+    linear-gradient(90deg, transparent 72%, rgba(1, 12, 29, 0.55) 100%),
+    linear-gradient(180deg, rgba(1, 12, 29, 0.28) 0%, transparent 18%, transparent 82%, rgba(1, 12, 29, 0.4) 100%);
   pointer-events: none;
 }
 
@@ -445,18 +451,18 @@ body.page-hoy .site-header {
   position: absolute;
   inset: 0;
   border-radius: 50%;
-  background: linear-gradient(90deg, transparent 42%, rgba(5, 6, 10, 0.82) 58%);
+  background: linear-gradient(90deg, transparent 42%, rgba(1, 12, 29, 0.82) 58%);
 }
 
-.moon-card[data-phase="new-moon"] .moon-disc { background: rgba(5, 6, 10, 0.92); }
+.moon-card[data-phase="new-moon"] .moon-disc { background: rgba(1, 12, 29, 0.92); }
 .moon-card[data-phase="full-moon"] .moon-disc { background: transparent; }
 .moon-card[data-phase="waxing-crescent"] .moon-disc,
 .moon-card[data-phase="first-quarter"] .moon-disc {
-  background: linear-gradient(90deg, transparent 48%, rgba(5, 6, 10, 0.88) 52%);
+  background: linear-gradient(90deg, transparent 48%, rgba(1, 12, 29, 0.88) 52%);
 }
 .moon-card[data-phase="waning-crescent"] .moon-disc,
 .moon-card[data-phase="last-quarter"] .moon-disc {
-  background: linear-gradient(90deg, rgba(5, 6, 10, 0.88) 48%, transparent 52%);
+  background: linear-gradient(90deg, rgba(1, 12, 29, 0.88) 48%, transparent 52%);
 }
 
 .moon-crater {

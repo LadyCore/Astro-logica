@@ -60,7 +60,7 @@
       } else {
         ctx.fillStyle = star.gold
           ? `rgba(228, 196, 138, ${star.a * twinkle})`
-          : `rgba(230, 236, 255, ${star.a * twinkle * 0.85})`;
+          : `rgba(180, 210, 255, ${star.a * twinkle * 0.75})`;
       }
       ctx.arc(star.x, star.y, star.r, 0, Math.PI * 2);
       ctx.fill();
