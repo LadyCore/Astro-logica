@@ -174,7 +174,15 @@ $interpFor = static function ($body) use ($interpretations): string {
       <img
         src="/assets/img/mystic-woman-profile.jpg"
         alt=""
-        class="mystic-portrait"
+        class="mystic-portrait mystic-portrait--dark"
+        width="768"
+        height="1408"
+        decoding="async"
+      >
+      <img
+        src="/assets/img/mystic-woman-profile-light.jpg"
+        alt=""
+        class="mystic-portrait mystic-portrait--light"
         width="768"
         height="1408"
         decoding="async"
