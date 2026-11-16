@@ -350,8 +350,8 @@ body.page-hoy .site-header {
   flex-direction: column;
   gap: clamp(1rem, 2.2vh, 1.75rem);
   box-sizing: border-box;
-  /* Leave a sliver so Saturno (first outer) peeks under the fold */
-  --hoy-peek: clamp(2.5rem, 5vh, 3.5rem);
+  /* Peek Saturno under the fold without a large empty band */
+  --hoy-peek: clamp(2.75rem, 4.5vh, 3.25rem);
   height: calc(100% - var(--hoy-peek));
   min-height: calc(100% - var(--hoy-peek));
   max-height: calc(100% - var(--hoy-peek));
@@ -408,11 +408,11 @@ body.page-hoy .site-header {
   flex: 0 0 auto;
   display: grid;
   grid-template-columns: auto 1fr;
-  gap: 1.35rem 1.75rem;
+  gap: 1.2rem 1.6rem;
   align-items: center;
-  padding: clamp(1.35rem, 2.4vh, 1.85rem) clamp(1.4rem, 2vw, 1.85rem);
+  padding: clamp(1.15rem, 1.8vh, 1.45rem) clamp(1.3rem, 2vw, 1.65rem);
   margin-bottom: 0;
-  min-height: clamp(148px, 20vh, 210px);
+  min-height: clamp(132px, 15vh, 168px);
   border: 1px solid var(--border);
   border-radius: 1rem;
   background:
@@ -422,8 +422,8 @@ body.page-hoy .site-header {
 }
 
 .moon-card-art {
-  width: clamp(120px, 14vh, 148px);
-  height: clamp(120px, 14vh, 148px);
+  width: clamp(104px, 12vh, 128px);
+  height: clamp(104px, 12vh, 128px);
   display: grid;
   place-items: center;
 }
