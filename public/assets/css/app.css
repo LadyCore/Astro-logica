@@ -39,16 +39,16 @@
   --gold-dim: #a88850;
   --gold-line: rgba(110, 83, 36, 0.35);
   --gold-soft: rgba(201, 164, 106, 0.18);
-  --cream: #14110e;
-  /* Near-ink secondary copy — readable on cream/white */
-  --muted: #2a241c;
+  --cream: #1a140c;
+  /* Slightly darker than original #5c4e3a — not near-ink */
+  --muted: #4a4034;
   --bg: #efe6d4;
-  --text: #14110e;
-  --text-muted: #1a1612;
+  --text: #1a140c;
+  --text-muted: #4a4034;
   --accent: #8a6a32;
   --border: rgba(110, 83, 36, 0.35);
-  --card-bg: #fffcf6;
-  --header-bg: rgba(247, 241, 230, 0.94);
+  --card-bg: rgba(255, 252, 246, 0.92);
+  --header-bg: rgba(247, 241, 230, 0.9);
 }
 
 *,
@@ -306,16 +306,15 @@ body.page-hoy .site-header {
 }
 
 [data-theme="light"] .mystic-portrait {
-  filter: contrast(1.16) saturate(1.2) brightness(1.02);
-  /* No alpha fade — hard edge into cream (no gray fog band) */
-  -webkit-mask-image: none;
-  mask-image: none;
+  filter: contrast(1.1) saturate(1.12) brightness(1.03);
+  /* Soft alpha fade into cream — keeps gentle blend without gray fog */
+  -webkit-mask-image: linear-gradient(90deg, #000 0%, #000 80%, transparent 100%);
+  mask-image: linear-gradient(90deg, #000 0%, #000 80%, transparent 100%);
 }
 
 [data-theme="light"] .hoy-art,
 [data-theme="light"] .hoy-art-frame {
   background: var(--void);
-  border-right: 1px solid rgba(138, 106, 50, 0.28);
 }
 
 .hoy-art-fade {
@@ -328,8 +327,10 @@ body.page-hoy .site-header {
 }
 
 [data-theme="light"] .hoy-art-fade {
-  /* Hard edge into cream UI — no fog strip */
-  background: none;
+  /* Warm cream soft fade (not cool gray haze) */
+  background:
+    linear-gradient(90deg, transparent 78%, rgba(247, 241, 230, 0.35) 90%, rgba(239, 230, 212, 0.92) 100%),
+    linear-gradient(180deg, rgba(247, 241, 230, 0.1) 0%, transparent 12%, transparent 88%, rgba(239, 230, 212, 0.18) 100%);
 }
 
 .hoy-art-glow {
@@ -342,7 +343,8 @@ body.page-hoy .site-header {
 }
 
 [data-theme="light"] .hoy-art-glow {
-  display: none;
+  opacity: 0.4;
+  filter: blur(14px);
 }
 
 .hoy-content {
@@ -445,14 +447,7 @@ body.page-hoy .site-header {
   box-shadow: 0 18px 40px rgba(0, 0, 0, 0.25);
 }
 
-[data-theme="light"] .moon-card {
-  /* Match resting planet cards — no extra elevation */
-  box-shadow: none;
-}
-
-[data-theme="light"] .planet-card:hover {
-  box-shadow: 0 6px 16px rgba(40, 30, 15, 0.1);
-}
+/* Light mode keeps the original lunar card elevation Euge liked */
 
 .moon-card-art {
   width: clamp(104px, 12vh, 128px);
@@ -640,26 +635,9 @@ body.page-hoy .site-header {
 }
 
 [data-theme="light"] .planet-note,
-[data-theme="light"] .moon-blurb,
-[data-theme="light"] .planet-sign,
-[data-theme="light"] .planet-degree,
-[data-theme="light"] .hoy-sub,
-[data-theme="light"] .brand-tagline,
-[data-theme="light"] .nav-link,
-[data-theme="light"] .sky-source {
-  color: #1a1612;
+[data-theme="light"] .moon-blurb {
+  color: #453c32;
   opacity: 1;
-}
-
-[data-theme="light"] .nav-link.is-muted {
-  color: #2a241c;
-  opacity: 0.55;
-}
-
-[data-theme="light"] .sky-source.is-mock,
-[data-theme="light"] .sky-source.is-live {
-  color: #2a241c;
-  border-color: rgba(110, 83, 36, 0.45);
 }
 
 .planet-grid-primary .planet-note {
