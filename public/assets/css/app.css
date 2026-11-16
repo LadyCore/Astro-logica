@@ -279,8 +279,20 @@ body.page-hoy .site-header {
   min-height: 0;
   height: 100%;
   padding: 0;
+  /* No vertical separator — soft seam via .hoy-art-fade only */
+  border: none;
   border-right: none;
+  outline: none;
+  box-shadow: none;
   background: #010c1d;
+}
+
+.hoy-art::before,
+.hoy-art::after,
+.hoy-art-frame::before,
+.hoy-art-frame::after {
+  content: none;
+  display: none;
 }
 
 .hoy-art-frame {
@@ -291,8 +303,9 @@ body.page-hoy .site-header {
   border-radius: 0;
   overflow: hidden;
   border: none;
-  background: #010c1d;
+  outline: none;
   box-shadow: none;
+  background: #010c1d;
 }
 
 .mystic-portrait {
@@ -305,31 +318,41 @@ body.page-hoy .site-header {
   object-position: 68% 18%;
   transform: scale(1.03);
   filter: contrast(1.06) saturate(1.1) brightness(1.05);
+  /* No mask cut — avoid bright/wide haze band */
+  -webkit-mask-image: none;
+  mask-image: none;
 }
 
-/* Light: same navy cosmic profile; soft right fade into cream UI */
+/* Light: navy art dissolves into cream UI via narrow alpha (no cream-on-navy haze) */
 [data-theme="light"] .mystic-portrait {
   filter: contrast(1.08) saturate(1.12) brightness(1.02);
+  -webkit-mask-image: linear-gradient(90deg, #000 0%, #000 95.5%, transparent 100%);
+  mask-image: linear-gradient(90deg, #000 0%, #000 95.5%, transparent 100%);
 }
 
-[data-theme="light"] .hoy-art,
+[data-theme="light"] .hoy-art {
+  /* Cream under the mask edge so the seam is soft, not a bright overlay band */
+  background: var(--void);
+  border: none;
+  box-shadow: none;
+}
+
 [data-theme="light"] .hoy-art-frame {
-  background: #010c1d;
+  background: transparent;
+  border: none;
+  box-shadow: none;
 }
 
 .hoy-art-fade {
   position: absolute;
   inset: 0;
-  background:
-    linear-gradient(90deg, transparent 72%, rgba(1, 12, 29, 0.55) 100%),
-    linear-gradient(180deg, rgba(1, 12, 29, 0.28) 0%, transparent 18%, transparent 82%, rgba(1, 12, 29, 0.4) 100%);
+  /* No overlay stripe — seam handled by portrait mask / panel bg */
+  background: none;
   pointer-events: none;
 }
 
 [data-theme="light"] .hoy-art-fade {
-  /* Soft cream edge into content — navy void stays */
-  background:
-    linear-gradient(90deg, transparent 76%, rgba(247, 241, 230, 0.28) 88%, rgba(239, 230, 212, 0.88) 100%);
+  background: none;
 }
 
 .hoy-art-glow {
@@ -342,7 +365,7 @@ body.page-hoy .site-header {
 }
 
 [data-theme="light"] .hoy-art-glow {
-  opacity: 0.55;
+  opacity: 0.4;
 }
 
 .hoy-content {
@@ -356,6 +379,10 @@ body.page-hoy .site-header {
   animation: rise 0.8s var(--ease) both;
   scrollbar-width: thin;
   scrollbar-color: var(--gold-dim) transparent;
+  border: none;
+  border-left: none;
+  outline: none;
+  box-shadow: none;
 }
 
 .hoy-content::-webkit-scrollbar {
