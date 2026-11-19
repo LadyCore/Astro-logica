@@ -144,7 +144,7 @@ $interpFor = static function ($body) use ($interpretations): string {
       </p>
       <div class="home-hero-ctas">
         <a class="btn btn-gold" href="/hoy">Explorar el cielo de hoy <span aria-hidden="true">→</span></a>
-        <a class="btn btn-outline" href="/carta-natal">Conocer cartas <span aria-hidden="true">→</span></a>
+        <a class="btn btn-outline" href="/carta-astral">Conocer cartas <span aria-hidden="true">→</span></a>
       </div>
     </div>
     <div class="home-hero-art" aria-hidden="true">
@@ -245,7 +245,7 @@ $interpFor = static function ($body) use ($interpretations): string {
       <div class="home-feature-copy">
         <h2>Carta natal</h2>
         <p>Tu mapa de nacimiento: signos, casas y aspectos para comprender tu arquitectura interior.</p>
-        <a class="btn btn-gold" href="/carta-natal">Calcular mi carta <span aria-hidden="true">→</span></a>
+        <a class="btn btn-gold" href="/carta-astral">Calcular mi carta <span aria-hidden="true">→</span></a>
       </div>
     </article>
 
@@ -259,7 +259,7 @@ $interpFor = static function ($body) use ($interpretations): string {
       <div class="home-feature-copy">
         <h2>Revolución solar</h2>
         <p>El cielo de tu cumpleaños cada año: un ciclo personal para orientar decisiones y deseos.</p>
-        <a class="btn btn-outline" href="/carta-natal">Explorar mi revolución <span aria-hidden="true">→</span></a>
+        <a class="btn btn-outline" href="/revolucion-solar">Explorar mi revolución <span aria-hidden="true">→</span></a>
       </div>
     </article>
   </section>

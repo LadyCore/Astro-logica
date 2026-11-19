@@ -217,6 +217,381 @@ body.page-hoy .site-header {
   cursor: default;
 }
 
+.nav-dropdown {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.nav-dropdown-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  background: none;
+  border: none;
+  border-bottom: 1px solid transparent;
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.72rem;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  padding: 0.35rem 0.1rem;
+}
+
+.nav-dropdown-toggle:hover,
+.nav-dropdown.is-active .nav-dropdown-toggle,
+.nav-dropdown-toggle.is-active {
+  color: var(--gold-bright);
+  border-bottom-color: var(--gold);
+}
+
+.nav-caret {
+  width: 0;
+  height: 0;
+  border-left: 3.5px solid transparent;
+  border-right: 3.5px solid transparent;
+  border-top: 4px solid currentColor;
+  opacity: 0.75;
+  transition: transform 160ms var(--ease);
+}
+
+.nav-dropdown.is-open .nav-caret {
+  transform: rotate(180deg);
+}
+
+.nav-dropdown-menu {
+  position: absolute;
+  top: calc(100% + 0.65rem);
+  left: 50%;
+  transform: translateX(-50%);
+  min-width: 13.5rem;
+  padding: 0.45rem;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--ink);
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.28);
+  z-index: 80;
+  display: grid;
+  gap: 0.15rem;
+}
+
+.nav-dropdown-menu[hidden] {
+  display: none;
+}
+
+.nav-dropdown-item {
+  display: block;
+  padding: 0.55rem 0.75rem;
+  border-radius: 7px;
+  font-size: 0.78rem;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.nav-dropdown-item:hover,
+.nav-dropdown-item.is-active {
+  color: var(--gold-bright);
+  background: color-mix(in srgb, var(--gold) 12%, transparent);
+}
+
+/* Feature pages: Carta Astral / Solar / Tránsitos / Horóscopo */
+.feature-page {
+  width: min(1120px, calc(100% - 2rem));
+  margin: 0 auto;
+  padding: 1.75rem 0 3.5rem;
+}
+
+.feature-hero {
+  margin-bottom: 1.5rem;
+}
+
+.feature-banner {
+  padding: 0.85rem 1rem;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  margin-bottom: 1.25rem;
+  font-size: 0.92rem;
+}
+
+.feature-banner.is-warn {
+  background: color-mix(in srgb, var(--gold) 10%, transparent);
+}
+
+.feature-banner.is-error {
+  background: color-mix(in srgb, #a1362a 14%, transparent);
+  border-color: color-mix(in srgb, #a1362a 35%, var(--border));
+}
+
+.feature-layout {
+  display: grid;
+  grid-template-columns: minmax(280px, 380px) minmax(0, 1fr);
+  gap: 1.5rem;
+  align-items: start;
+}
+
+.astro-form {
+  padding: 1.25rem 1.35rem 1.5rem;
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  background: color-mix(in srgb, var(--ink) 88%, transparent);
+}
+
+.astro-form h2 {
+  font-family: "Cormorant Garamond", serif;
+  font-size: 1.55rem;
+  font-weight: 600;
+  color: var(--gold-bright);
+  margin: 0 0 1rem;
+}
+
+.astro-form-grid {
+  display: grid;
+  gap: 0.85rem;
+}
+
+.astro-field-row {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.65rem;
+}
+
+.astro-field {
+  display: grid;
+  gap: 0.35rem;
+  font-size: 0.78rem;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+}
+
+.astro-field input[type="text"],
+.astro-field input[type="number"],
+.astro-field input[type="datetime-local"] {
+  width: 100%;
+  padding: 0.55rem 0.65rem;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--void);
+  color: var(--text);
+  font: inherit;
+  font-size: 0.92rem;
+}
+
+.astro-field-check {
+  align-content: end;
+}
+
+.astro-field-check input[type="checkbox"] {
+  width: 1.1rem;
+  height: 1.1rem;
+  accent-color: var(--gold);
+}
+
+.astro-submit {
+  margin-top: 1.15rem;
+  width: 100%;
+  padding: 0.8rem 1rem;
+  border: 1px solid color-mix(in srgb, var(--gold) 55%, transparent);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--gold) 18%, transparent);
+  color: var(--gold-bright);
+  font: inherit;
+  font-size: 0.78rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background 180ms var(--ease), border-color 180ms var(--ease);
+}
+
+.astro-submit:hover {
+  background: color-mix(in srgb, var(--gold) 28%, transparent);
+  border-color: var(--gold);
+}
+
+.feature-result {
+  min-height: 320px;
+  display: grid;
+  place-items: center;
+}
+
+.feature-empty {
+  color: var(--text-muted);
+  text-align: center;
+  max-width: 28ch;
+  line-height: 1.55;
+}
+
+.feature-chart.ivory-panel {
+  width: 100%;
+  padding: 1rem;
+  border-radius: 16px;
+  background:
+    radial-gradient(ellipse 70% 55% at 50% 42%, rgba(255, 252, 245, 0.95), transparent 72%),
+    linear-gradient(165deg, #faf6ee 0%, #f6f1e8 48%, #efe4d3 100%);
+  border: 1px solid color-mix(in srgb, #8c7c68 28%, transparent);
+}
+
+.feature-chart svg {
+  width: 100%;
+  height: auto;
+  display: block;
+  max-width: 640px;
+  margin: 0 auto;
+}
+
+.horoscope-form {
+  margin-bottom: 1.5rem;
+}
+
+.sign-picker {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 0.5rem;
+}
+
+.sign-chip {
+  position: relative;
+  display: grid;
+  place-items: center;
+  gap: 0.2rem;
+  padding: 0.65rem 0.35rem;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  cursor: pointer;
+  color: var(--text-muted);
+  transition: border-color 160ms var(--ease), background 160ms var(--ease), color 160ms var(--ease);
+}
+
+.sign-chip input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.sign-chip-glyph {
+  font-size: 1.2rem;
+  line-height: 1;
+}
+
+.sign-chip-label {
+  font-size: 0.68rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.sign-chip:hover,
+.sign-chip.is-selected {
+  color: var(--gold-bright);
+  border-color: color-mix(in srgb, var(--gold) 55%, var(--border));
+  background: color-mix(in srgb, var(--gold) 12%, transparent);
+}
+
+.horoscope-result {
+  display: grid;
+  gap: 1.15rem;
+}
+
+.horoscope-head h2 {
+  font-family: "Cormorant Garamond", serif;
+  font-size: clamp(1.8rem, 3vw, 2.4rem);
+  color: var(--gold-bright);
+  margin: 0.15rem 0 0;
+}
+
+.score-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 0.65rem;
+}
+
+.score-card {
+  padding: 0.75rem 0.8rem;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: color-mix(in srgb, var(--ink) 85%, transparent);
+}
+
+.score-label {
+  margin: 0;
+  font-size: 0.68rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.score-value {
+  margin: 0.2rem 0 0.45rem;
+  font-family: "Cormorant Garamond", serif;
+  font-size: 1.65rem;
+  color: var(--gold-bright);
+}
+
+.score-bar {
+  height: 3px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--gold) 18%, transparent);
+  overflow: hidden;
+}
+
+.score-bar span {
+  display: block;
+  height: 100%;
+  background: var(--gold);
+}
+
+.horoscope-columns {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.85rem;
+}
+
+.horoscope-block {
+  padding: 1rem 1.1rem;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: color-mix(in srgb, var(--ink) 88%, transparent);
+}
+
+.horoscope-block h3 {
+  margin: 0 0 0.45rem;
+  font-size: 0.78rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--gold);
+}
+
+.horoscope-block p {
+  margin: 0;
+  line-height: 1.55;
+  color: var(--text);
+}
+
+.lucky-line {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+@media (max-width: 900px) {
+  .feature-layout {
+    grid-template-columns: 1fr;
+  }
+  .sign-picker {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+  .score-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .horoscope-columns {
+    grid-template-columns: 1fr;
+  }
+  .astro-field-row {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
 .header-actions {
   display: flex;
   justify-content: flex-end;
@@ -793,9 +1168,19 @@ body.page-hoy .site-header {
 
   .site-header {
     grid-template-columns: 1fr auto;
+    grid-template-rows: auto auto;
   }
   .site-nav {
-    display: none;
+    display: flex;
+    grid-column: 1 / -1;
+    justify-content: flex-start;
+    flex-wrap: wrap;
+    gap: 0.35rem 0.75rem;
+    padding-top: 0.35rem;
+  }
+  .nav-dropdown-menu {
+    left: 0;
+    transform: none;
   }
   .hoy-shell {
     grid-template-columns: 1fr;

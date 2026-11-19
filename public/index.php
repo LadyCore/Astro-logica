@@ -12,7 +12,20 @@ $routes = [
     'GET /' => [\App\Controllers\HomeController::class, 'index'],
     'GET /hoy' => [\App\Controllers\HoyController::class, 'index'],
     'GET /cielo-del-dia' => [\App\Controllers\HoyController::class, 'index'],
+
+    'GET /carta-astral' => [\App\Controllers\NatalController::class, 'index'],
+    'POST /carta-astral' => [\App\Controllers\NatalController::class, 'index'],
     'GET /carta-natal' => [\App\Controllers\NatalController::class, 'index'],
+    'POST /carta-natal' => [\App\Controllers\NatalController::class, 'index'],
+
+    'GET /revolucion-solar' => [\App\Controllers\SolarController::class, 'index'],
+    'POST /revolucion-solar' => [\App\Controllers\SolarController::class, 'index'],
+
+    'GET /transitos' => [\App\Controllers\TransitController::class, 'index'],
+    'POST /transitos' => [\App\Controllers\TransitController::class, 'index'],
+
+    'GET /tu-horoscopo' => [\App\Controllers\HoroscopeController::class, 'index'],
+    'POST /tu-horoscopo' => [\App\Controllers\HoroscopeController::class, 'index'],
 ];
 
 $key = $method . ' ' . $uri;

@@ -300,6 +300,364 @@ final class AstroService
     }
 
     /**
+     * Birth Chart SVG (FreeAstroAPI natal/chart) — Ivory Ink by default.
+     *
+     * @param array<string, mixed> $birthData
+     */
+    public function getBirthChartSvg(array $birthData, string $themePreset = 'ivory-ink'): ?string
+    {
+        if (!$this->hasApiKey()) {
+            return null;
+        }
+
+        $natal = $this->normalizeNatalPayload($birthData);
+        $preset = $this->normalizeThemePreset($themePreset);
+        $cacheKey = 'birth-' . md5(json_encode([$natal, $preset], JSON_THROW_ON_ERROR)) . '.svg';
+        $cached = $this->readChartCache($cacheKey);
+        if ($cached !== null) {
+            return $cached;
+        }
+
+        $path = (string) ($this->config['astro_api']['chart_svg_path'] ?? '/api/v1/natal/chart/');
+        $payload = array_merge($natal, $this->svgRenderOptions($preset), [
+            'show_metadata' => false,
+            'display_settings' => $this->defaultDisplaySettings(),
+            'chart_config' => $this->chartConfigForPreset($preset),
+        ]);
+
+        try {
+            $svg = $this->requestSvg($path, $payload);
+        } catch (\Throwable $e) {
+            if (!empty($this->config['debug'])) {
+                error_log('[AstroService] birth chart SVG failed: ' . $e->getMessage());
+            }
+            return null;
+        }
+
+        if ($svg === '') {
+            return null;
+        }
+
+        $ttl = (int) ($this->config['astro_api']['chart_cache_seconds'] ?? 900);
+        $this->writeChartCache($cacheKey, $svg, $ttl);
+        return $svg;
+    }
+
+    /**
+     * Solar Return chart SVG — FreeAstroAPI /api/v1/natal/chart/solar-return
+     *
+     * @param array<string, mixed> $birthData
+     */
+    public function getSolarReturnChartSvg(array $birthData, int $year, string $themePreset = 'ivory-ink'): ?string
+    {
+        if (!$this->hasApiKey()) {
+            return null;
+        }
+
+        $natal = $this->normalizeNatalPayload($birthData);
+        $preset = $this->normalizeThemePreset($themePreset);
+        $api = $this->config['astro_api'] ?? [];
+        $returnCity = (string) ($birthData['return_city'] ?? $natal['city'] ?? $api['sky_city'] ?? 'Buenos Aires');
+        $cacheKey = 'solar-' . md5(json_encode([$natal, $year, $returnCity, $preset], JSON_THROW_ON_ERROR)) . '.svg';
+        $cached = $this->readChartCache($cacheKey);
+        if ($cached !== null) {
+            return $cached;
+        }
+
+        $path = (string) ($api['solar_return_svg_path'] ?? '/api/v1/natal/chart/solar-return');
+        $render = $this->svgRenderOptions($preset);
+        $payload = [
+            'natal' => array_merge($natal, $render, [
+                'show_metadata' => false,
+                'display_settings' => $this->defaultDisplaySettings(),
+                'chart_config' => $this->chartConfigForPreset($preset),
+            ]),
+            'solar_return_year' => $year,
+            'chart_mode' => 'solar_return_only',
+            'solar_return_city' => $returnCity,
+            'solar_return_tz_str' => (string) ($natal['tz_str'] ?? $this->config['timezone'] ?? 'AUTO'),
+            'show_solar_return_aspects' => true,
+        ];
+        if (isset($birthData['return_lat'], $birthData['return_lng'])) {
+            $payload['solar_return_lat'] = (float) $birthData['return_lat'];
+            $payload['solar_return_lng'] = (float) $birthData['return_lng'];
+        } elseif (isset($natal['lat'], $natal['lng'])) {
+            $payload['solar_return_lat'] = (float) $natal['lat'];
+            $payload['solar_return_lng'] = (float) $natal['lng'];
+        }
+
+        try {
+            $svg = $this->requestSvg($path, $payload);
+        } catch (\Throwable $e) {
+            if (!empty($this->config['debug'])) {
+                error_log('[AstroService] solar return SVG failed: ' . $e->getMessage());
+            }
+            return null;
+        }
+
+        if ($svg === '') {
+            return null;
+        }
+
+        $ttl = (int) ($api['chart_cache_seconds'] ?? 900);
+        $this->writeChartCache($cacheKey, $svg, $ttl);
+        return $svg;
+    }
+
+    /**
+     * Transit Chart SVG — FreeAstroAPI /api/v1/natal/chart/transits
+     *
+     * @param array<string, mixed> $birthData
+     */
+    public function getTransitChartSvg(
+        array $birthData,
+        ?string $transitDate = null,
+        string $themePreset = 'ivory-ink',
+    ): ?string {
+        if (!$this->hasApiKey()) {
+            return null;
+        }
+
+        $natal = $this->normalizeNatalPayload($birthData);
+        $preset = $this->normalizeThemePreset($themePreset);
+        $api = $this->config['astro_api'] ?? [];
+        $tz = (string) ($this->config['timezone'] ?? 'America/Argentina/Buenos_Aires');
+        $when = $transitDate && $transitDate !== ''
+            ? $transitDate
+            : (new \DateTimeImmutable('now', new \DateTimeZone($tz)))->format('Y-m-d\TH:i');
+        $currentCity = (string) ($birthData['current_city'] ?? $api['sky_city'] ?? 'Buenos Aires');
+        $cacheKey = 'transit-' . md5(json_encode([$natal, $when, $currentCity, $preset], JSON_THROW_ON_ERROR)) . '.svg';
+        $cached = $this->readChartCache($cacheKey);
+        if ($cached !== null) {
+            return $cached;
+        }
+
+        $path = (string) ($api['transit_svg_path'] ?? '/api/v1/natal/chart/transits');
+        $render = $this->svgRenderOptions($preset);
+        $payload = [
+            'natal' => array_merge($natal, $render, [
+                'show_metadata' => false,
+                'display_settings' => $this->defaultDisplaySettings(),
+                'chart_config' => $this->chartConfigForPreset($preset),
+            ]),
+            'current_city' => $currentCity,
+            'transit_date' => $when,
+            'tz_str' => $tz,
+            'show_inter_aspects' => true,
+            'show_natal_aspects' => false,
+            'show_transit_aspects' => false,
+        ];
+        if (isset($birthData['current_lat'], $birthData['current_lng'])) {
+            $payload['current_lat'] = (float) $birthData['current_lat'];
+            $payload['current_lng'] = (float) $birthData['current_lng'];
+        } elseif (isset($api['sky_lat'], $api['sky_lng'])) {
+            $payload['current_lat'] = (float) $api['sky_lat'];
+            $payload['current_lng'] = (float) $api['sky_lng'];
+        }
+
+        try {
+            $svg = $this->requestSvg($path, $payload);
+        } catch (\Throwable $e) {
+            if (!empty($this->config['debug'])) {
+                error_log('[AstroService] transit chart SVG failed: ' . $e->getMessage());
+            }
+            return null;
+        }
+
+        if ($svg === '') {
+            return null;
+        }
+
+        $ttl = (int) ($api['chart_cache_seconds'] ?? 900);
+        $this->writeChartCache($cacheKey, $svg, $ttl);
+        return $svg;
+    }
+
+    /**
+     * Daily Horoscope by sun sign — FreeAstroAPI /api/v2/horoscope/daily/sign
+     *
+     * @return array<string, mixed>
+     */
+    public function getDailySignHoroscope(string $sign, ?string $date = null, string $lang = 'en'): array
+    {
+        if (!$this->hasApiKey()) {
+            return ['error' => true, 'message' => 'Falta FREE_ASTRO_API_KEY'];
+        }
+
+        $sign = strtolower(trim($sign));
+        $path = (string) ($this->config['astro_api']['daily_sign_path'] ?? '/api/v2/horoscope/daily/sign');
+        $tz = (string) ($this->config['timezone'] ?? 'America/Argentina/Buenos_Aires');
+        $query = [
+            'sign' => $sign,
+            'date' => $date ?: 'today',
+            'tz_str' => $tz,
+            'lang' => $lang,
+        ];
+
+        $result = $this->curlGet($path, $query, 'application/json');
+        if ($result['http_code'] !== 200 || $result['body'] === '') {
+            $detail = '';
+            if ($result['body'] !== '') {
+                $decoded = json_decode($result['body'], true);
+                if (is_array($decoded)) {
+                    $detail = is_string($decoded['detail'] ?? null)
+                        ? (string) $decoded['detail']
+                        : (is_string($decoded['message'] ?? null) ? (string) $decoded['message'] : '');
+                }
+            }
+            $base = $result['error'] !== '' ? $result['error'] : 'Error al consultar el horóscopo';
+            if ($result['http_code'] === 429) {
+                $base = 'La API alcanzó el límite de ritmo (≈1 req/s). Esperá un momento y reintentá.';
+            }
+            return [
+                'error' => true,
+                'message' => trim($base . ($detail !== '' ? ': ' . $detail : '') . ' (HTTP ' . $result['http_code'] . ')'),
+                'http_code' => $result['http_code'],
+            ];
+        }
+
+        $data = json_decode($result['body'], true);
+        return is_array($data)
+            ? $data
+            : ['error' => true, 'message' => 'Respuesta inválida'];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function svgRenderOptions(string $preset): array
+    {
+        return [
+            'format' => 'svg',
+            'size' => 720,
+            'theme_type' => $preset === 'dark' ? 'dark' : 'light',
+            'house_system' => 'placidus',
+            'zodiac_type' => 'tropical',
+        ];
+    }
+
+    /**
+     * @return array<string, bool>
+     */
+    private function defaultDisplaySettings(): array
+    {
+        return [
+            'sun' => true,
+            'moon' => true,
+            'mercury' => true,
+            'venus' => true,
+            'mars' => true,
+            'jupiter' => true,
+            'saturn' => true,
+            'uranus' => true,
+            'neptune' => true,
+            'pluto' => true,
+            'chiron' => false,
+            'north_node' => true,
+            'lilith' => false,
+        ];
+    }
+
+    private function normalizeThemePreset(string $themePreset): string
+    {
+        $preset = strtolower($themePreset);
+        if (in_array($preset, ['light', 'ivory', 'ivory_ink', 'ivory-ink'], true)) {
+            return 'ivory-ink';
+        }
+        return $preset === 'dark' ? 'dark' : 'ivory-ink';
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function chartConfigForPreset(string $preset): array
+    {
+        if ($preset === 'dark') {
+            return [
+                'chart_background' => '#010c1d',
+                'aspect_circle_background' => '#06101c',
+                'custom_planet_color' => '#e4c48a',
+                'custom_sign_color' => '#c9a46a',
+                'custom_house_color' => '#9aa8bb',
+                'custom_sign_bg_color' => '#0a1422',
+                'custom_house_bg_color' => '#06101c',
+                'planet_color_mode' => 'sign',
+                'show_retrograde_markers' => true,
+                'retrograde_marker_style' => 'rx',
+                'show_aspect_symbols' => false,
+                'planet_symbol_scale' => 0.38,
+                'sign_symbol_scale' => 0.55,
+            ];
+        }
+
+        // FreeAstroAPI editorial preset: Ivory Ink
+        return [
+            'chart_background' => '#F6F1E8',
+            'aspect_circle_background' => '#FAF6EE',
+            'custom_planet_color' => '#1E1B18',
+            'custom_sign_color' => '#6A5B48',
+            'custom_house_color' => '#3E362C',
+            'custom_sign_bg_color' => '#EFE4D3',
+            'custom_house_bg_color' => '#FAF6EE',
+            'sign_line_color' => '#3A3128',
+            'house_line_color' => '#8C7C68',
+            'aspect_conjunction_color' => '#2F2A24',
+            'aspect_opposition_color' => '#A1362A',
+            'aspect_trine_color' => '#1F4E79',
+            'aspect_square_color' => '#8F2B23',
+            'aspect_sextile_color' => '#355E8D',
+            'aspect_quincunx_color' => '#4D6A3A',
+            'show_retrograde_markers' => true,
+            'retrograde_marker_style' => 'rx',
+            'show_aspect_symbols' => false,
+            'planet_symbol_scale' => 0.38,
+            'sign_symbol_scale' => 0.55,
+        ];
+    }
+
+    /**
+     * @param array<string, scalar|null> $query
+     * @return array{http_code:int,body:string,error:string}
+     */
+    private function curlGet(string $endpoint, array $query, string $accept): array
+    {
+        $url = str_starts_with($endpoint, 'http')
+            ? $endpoint
+            : $this->baseUrl . $endpoint;
+        $qs = http_build_query($query);
+        if ($qs !== '') {
+            $url .= (str_contains($url, '?') ? '&' : '?') . $qs;
+        }
+
+        $ch = curl_init($url);
+        if ($ch === false) {
+            return ['http_code' => 0, 'body' => '', 'error' => 'No se pudo iniciar cURL'];
+        }
+
+        $timeout = (int) ($this->config['astro_api']['timeout'] ?? 20);
+        curl_setopt_array($ch, [
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_HTTPGET => true,
+            CURLOPT_HTTPHEADER => [
+                'Accept: ' . $accept,
+                'x-api-key: ' . $this->apiKey,
+            ],
+            CURLOPT_TIMEOUT => $timeout,
+        ]);
+
+        $response = curl_exec($ch);
+        $httpCode = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $curlError = curl_error($ch);
+        curl_close($ch);
+
+        return [
+            'http_code' => $httpCode,
+            'body' => is_string($response) ? $response : '',
+            'error' => $curlError,
+        ];
+    }
+
+    /**
      * @param array<string, mixed> $payload
      * @return array<string, mixed>
      */

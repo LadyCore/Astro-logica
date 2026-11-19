@@ -8,6 +8,7 @@ $appName = $appName ?? 'Astro-lógica';
 $tagline = $tagline ?? 'Con los Pies en la Tierra y el Corazón en las Estrellas';
 $pageClass = $pageClass ?? '';
 $activeNav = $activeNav ?? '';
+$activeCard = $activeCard ?? '';
 $title = $title ?? $appName;
 $contentFile = $templateFile ?? null;
 ?>
@@ -57,9 +58,27 @@ $contentFile = $templateFile ?? null;
     <nav class="site-nav" aria-label="Principal">
       <a href="/" class="nav-link<?= $activeNav === 'inicio' ? ' is-active' : '' ?>">Inicio</a>
       <a href="/hoy" class="nav-link<?= $activeNav === 'hoy' ? ' is-active' : '' ?>">Cielo del día</a>
-      <a href="/carta-natal" class="nav-link<?= $activeNav === 'cartas' ? ' is-active' : '' ?>">Cartas</a>
-      <span class="nav-link is-muted" title="Próximamente">Tránsitos</span>
-      <span class="nav-link is-muted" title="Próximamente">Diario</span>
+
+      <div class="nav-dropdown<?= $activeNav === 'cartas' ? ' is-active' : '' ?>">
+        <button
+          type="button"
+          class="nav-link nav-dropdown-toggle<?= $activeNav === 'cartas' ? ' is-active' : '' ?>"
+          aria-expanded="false"
+          aria-haspopup="true"
+          aria-controls="cartas-menu"
+          id="cartas-toggle"
+        >
+          Cartas
+          <span class="nav-caret" aria-hidden="true"></span>
+        </button>
+        <div class="nav-dropdown-menu" id="cartas-menu" role="menu" hidden>
+          <a href="/carta-astral" class="nav-dropdown-item<?= ($activeCard ?? '') === 'carta-astral' ? ' is-active' : '' ?>" role="menuitem">Carta Astral</a>
+          <a href="/revolucion-solar" class="nav-dropdown-item<?= ($activeCard ?? '') === 'revolucion-solar' ? ' is-active' : '' ?>" role="menuitem">Revolución Solar</a>
+          <a href="/transitos" class="nav-dropdown-item<?= ($activeCard ?? '') === 'transitos' ? ' is-active' : '' ?>" role="menuitem">Tránsitos</a>
+        </div>
+      </div>
+
+      <a href="/tu-horoscopo" class="nav-link<?= $activeNav === 'horoscopo' ? ' is-active' : '' ?>">Tu Horóscopo</a>
     </nav>
 
     <div class="header-actions">

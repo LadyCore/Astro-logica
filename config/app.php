@@ -30,6 +30,11 @@ return [
         'ephemeris_path' => '/api/v1/ephemeris/calculate',
         'natal_path' => '/api/v1/natal/calculate',
         'chart_svg_path' => '/api/v1/natal/chart/',
+        'solar_return_svg_path' => '/api/v1/natal/chart/solar-return',
+        'transit_svg_path' => '/api/v1/natal/chart/transits',
+        'transits_path' => '/api/v1/transits/calculate',
+        'solar_return_path' => '/api/v1/western/solar/calculate',
+        'daily_sign_path' => '/api/v2/horoscope/daily/sign',
         'bodies' => [
             'Sun', 'Moon', 'Mercury', 'Venus', 'Mars',
             'Jupiter', 'Saturn', 'Uranus', 'Neptune', 'Pluto',

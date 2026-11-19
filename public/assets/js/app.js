@@ -18,6 +18,35 @@
     });
   }
 
+  // Cartas dropdown
+  const drop = document.querySelector(".nav-dropdown");
+  const dropBtn = document.getElementById("cartas-toggle");
+  const dropMenu = document.getElementById("cartas-menu");
+  if (drop && dropBtn && dropMenu) {
+    const closeDrop = () => {
+      drop.classList.remove("is-open");
+      dropBtn.setAttribute("aria-expanded", "false");
+      dropMenu.hidden = true;
+    };
+    const openDrop = () => {
+      drop.classList.add("is-open");
+      dropBtn.setAttribute("aria-expanded", "true");
+      dropMenu.hidden = false;
+    };
+    dropBtn.addEventListener("click", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (drop.classList.contains("is-open")) closeDrop();
+      else openDrop();
+    });
+    document.addEventListener("click", (e) => {
+      if (!drop.contains(e.target)) closeDrop();
+    });
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") closeDrop();
+    });
+  }
+
   const canvas = document.getElementById("starfield");
   let ctx;
   let stars = [];
