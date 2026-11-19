@@ -26,3 +26,16 @@ Open http://127.0.0.1:8080/hoy
 ## Architecture
 
 Controllers / Services / Models / Views. Daily sky ≠ natal chart. Natal UI is stubbed; `AstroService::getNatalChart()` is ready.
+
+### AstroService
+
+Path: `app/Services/AstroService.php` (`App\Services`).
+
+```php
+$astro = new \App\Services\AstroService($config); // from controllers
+// or: new \App\Services\AstroService($apiKey);
+
+$sky = $astro->getDailySky();           // DailySky model (mock if no key)
+$raw = $astro->getDailySkyRaw();        // array JSON / error shape
+$chart = $astro->getNatalChart([...]);  // NatalChart (requires API key)
+```
