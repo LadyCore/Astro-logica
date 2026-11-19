@@ -10,8 +10,9 @@ $env = static function (string $key, mixed $default = null): mixed {
     return $value;
 };
 
-$apiKey = $env('FREEASTROAPI_KEY')
-    ?? $env('FREE_ASTRO_API_KEY')
+// Prefer FREE_ASTRO_API_KEY (FreeAstroAPI /llms.txt integration name).
+$apiKey = $env('FREE_ASTRO_API_KEY')
+    ?? $env('FREEASTROAPI_KEY')
     ?? $env('FREEASTRO_API_KEY');
 
 return [

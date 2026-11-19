@@ -18,18 +18,19 @@ Open http://127.0.0.1:8080/hoy
 
 ## Env / API key
 
-Copy `.env.example` → `.env` (gitignored) and set:
+Copy `.env.example` → `.env` (gitignored) and set **server-side only**:
 
 ```bash
-FREEASTROAPI_KEY=tu_api_key_aqui
+FREE_ASTRO_API_KEY=tu_api_key_aqui
 ```
 
 | Variable | Purpose |
 | --- | --- |
-| `FREEASTROAPI_KEY` | Live FreeAstroAPI (`x-api-key`). Aliases: `FREE_ASTRO_API_KEY`, `FREEASTRO_API_KEY` |
+| `FREE_ASTRO_API_KEY` | Preferred FreeAstroAPI key (sent as `x-api-key`) |
+| `FREEASTROAPI_KEY` / `FREEASTRO_API_KEY` | Aliases |
 | `FREEASTROAPI_BASE_URL` | Default `https://api.freeastroapi.com` |
 
-Get a key from the FreeAstroAPI dashboard. With the key set, `getDailySky()` calls the real ephemeris API; empty key keeps the local mock and shows **Datos demo · sin API key** on Hoy.
+Never put the key in browser / `NEXT_PUBLIC_*` / client JS. Docs map: https://www.freeastroapi.com/llms.txt — Cielo del día uses `POST /api/v1/ephemeris/calculate`. Empty key → local mock + **Datos demo · sin API key**.
 
 ## Architecture
 
