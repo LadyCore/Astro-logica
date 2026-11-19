@@ -2,15 +2,16 @@
 
 ## Carta Natal (Canva)
 
-1. Exportá desde Canva el archivo **REPORTE CN .pdf**.
-2. Copialo aquí como:
+Archivo activo:
 
 ```text
 storage/templates/reporte-cn.pdf
 ```
 
-3. Si las coordenadas no calzan perfectas, ajustá `config/natal_report.php`
-   (posiciones en milímetros desde la esquina superior izquierda de cada página).
+Estructura esperada del export **REPORTE CN .pdf**:
+1. Portada (nombre / fecha / lugar se estampan debajo del bloque de autora)
+2. Intro “Tu Carta Natal” (se conserva tal cual)
+3–4. Marcos en blanco para posiciones planetarias e interpretaciones
 
-El repo incluye un PDF base de Astro-lógica para que el flujo de descarga
-funcione de inmediato. Reemplazalo por tu plantilla de Canva cuando la tengas.
+Si re-exportás desde Canva, reemplazá este archivo y, si hace falta, retocá
+coordenadas en `config/natal_report.php` (mm desde la esquina superior izquierda).

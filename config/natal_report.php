@@ -3,39 +3,58 @@
 declare(strict_types=1);
 
 /**
- * Natal PDF report layout.
+ * Natal PDF report layout — tuned for the Canva template "REPORTE CN .pdf".
  *
- * Place your Canva export here (recommended filename):
+ * Place / replace the file at:
  *   storage/templates/reporte-cn.pdf
  *
- * Original Canva name can be "REPORTE CN .pdf" — save/rename it to reporte-cn.pdf
- * Coordinates are in millimeters from the top-left of each A4 page.
- * Tweak these values after dropping in the real Canva template.
+ * Canva page size ≈ 285.75 × 357.19 mm (not A4). Coordinates are mm from top-left.
+ * Pages: 1 cover · 2 intro (kept as-is) · 3–4 blank content frames for planets.
  */
 return [
-    // Absolute or project-relative path to the Canva PDF template.
     'template' => dirname(__DIR__) . '/storage/templates/reporte-cn.pdf',
 
-    // Page 1 — identity block (over the Canva cover).
+    // After the cover, keep these template pages untouched (intro copy).
+    'passthrough_pages' => [2],
+
+    // Blank frames used to stamp planet rows (cycled if more bodies than fit).
+    'content_pages' => [3, 4],
+
+    // Page 1 — identity under "Astróloga y Tarotista", above the sunburst.
     'cover' => [
-        'name' => ['x' => 40, 'y' => 145, 'w' => 130, 'size' => 16, 'style' => 'B', 'color' => [62, 54, 44]],
-        'birth_date' => ['x' => 40, 'y' => 165, 'w' => 130, 'size' => 12, 'style' => '', 'color' => [62, 54, 44]],
-        'place' => ['x' => 40, 'y' => 185, 'w' => 130, 'size' => 11, 'style' => '', 'color' => [90, 78, 64]],
+        'name' => [
+            'x' => 42.9, 'y' => 276, 'w' => 200, 'size' => 18, 'style' => 'B',
+            'align' => 'C', 'color' => [35, 32, 72],
+        ],
+        'birth_date' => [
+            'x' => 42.9, 'y' => 290, 'w' => 200, 'size' => 12, 'style' => '',
+            'align' => 'C', 'color' => [90, 58, 48],
+        ],
+        'place' => [
+            'x' => 42.9, 'y' => 302, 'w' => 200, 'size' => 11, 'style' => '',
+            'align' => 'C', 'color' => [70, 62, 88],
+        ],
     ],
 
-    // Page 2+ — planetary positions & short interpretations.
+    // Pages 3+ — planetary positions & short interpretations.
     'planets' => [
-        'start_y' => 38,
-        'line_height' => 21,
-        'left_x' => 24,
-        'width' => 162,
-        'title_size' => 10,
-        'body_size' => 9,
-        'note_size' => 8,
-        'title_color' => [62, 54, 44],
-        'meta_color' => [106, 91, 72],
-        'note_color' => [90, 78, 64],
-        // Soft max lines before continuing on next imported/added page.
-        'max_lines_per_page' => 11,
+        'heading' => [
+            'es' => 'Posiciones planetarias',
+            'en' => 'Planetary positions',
+        ],
+        'heading_y' => 28,
+        'heading_size' => 16,
+        'heading_color' => [35, 32, 72],
+        'start_y' => 48,
+        'line_height' => 26,
+        'left_x' => 36,
+        'width' => 214,
+        'title_size' => 11,
+        'body_size' => 10,
+        'note_size' => 9,
+        'title_color' => [35, 32, 72],
+        'meta_color' => [120, 72, 55],
+        'note_color' => [55, 50, 70],
+        'max_lines_per_page' => 10,
     ],
 ];

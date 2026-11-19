@@ -14,6 +14,11 @@ use setasign\Fpdi\Tcpdf\Fpdi;
  *
  * Template path (default): storage/templates/reporte-cn.pdf
  * Drop your Canva export "REPORTE CN .pdf" there (renamed) and adjust coordinates in config/natal_report.php.
+ *
+ * Expected Canva structure (REPORTE CN):
+ *   1 — cover (name / birth / place stamped under the author block)
+ *   2 — intro (“Tu Carta Natal”) kept as-is
+ *   3–4 — blank ornamental frames for planet rows (cycled if needed)
  */
 final class NatalReportPdfService
 {
@@ -77,13 +82,18 @@ final class NatalReportPdfService
         }
 
         // --- Page 1: cover / identity ---
-        $tpl = $pdf->importPage(1);
-        $size = $pdf->getTemplateSize($tpl);
-        $pdf->AddPage($size['orientation'] ?? 'P', [$size['width'], $size['height']]);
-        $pdf->useTemplate($tpl);
+        $this->addTemplatePage($pdf, 1);
         $this->stampCover($pdf, $birth, $locale);
 
-        // --- Page 2+: planets (reuse template page 2 when present, else clone page 1 size) ---
+        // --- Optional passthrough pages (intro copy from Canva) ---
+        $passthrough = $this->intList($this->layout['passthrough_pages'] ?? [2]);
+        foreach ($passthrough as $pageNo) {
+            if ($pageNo >= 1 && $pageNo <= $pageCount && $pageNo !== 1) {
+                $this->addTemplatePage($pdf, $pageNo);
+            }
+        }
+
+        // --- Content frames: planet positions + short interpretations ---
         $this->stampPlanets($pdf, $bodies, $locale, $pageCount);
 
         return $pdf->Output('', 'S');
@@ -132,28 +142,41 @@ final class NatalReportPdfService
      */
     private function stampPlanets(Fpdi $pdf, array $bodies, string $locale, int $templatePages): void
     {
-        $cfg = is_array($this->layout['planets'] ?? null) ? $this->layout['planets'] : [];
-        $startY = (float) ($cfg['start_y'] ?? 38);
-        $lineH = (float) ($cfg['line_height'] ?? 21);
-        $x = (float) ($cfg['left_x'] ?? 24);
-        $w = (float) ($cfg['width'] ?? 162);
-        $max = (int) ($cfg['max_lines_per_page'] ?? 11);
-        $titleSize = (float) ($cfg['title_size'] ?? 10);
-        $bodySize = (float) ($cfg['body_size'] ?? 9);
-        $noteSize = (float) ($cfg['note_size'] ?? 8);
-        $titleColor = $this->rgb($cfg['title_color'] ?? [62, 54, 44]);
-        $metaColor = $this->rgb($cfg['meta_color'] ?? [106, 91, 72]);
-        $noteColor = $this->rgb($cfg['note_color'] ?? [90, 78, 64]);
+        if ($bodies === []) {
+            return;
+        }
 
-        $pageTplIndex = $templatePages >= 2 ? 2 : 1;
-        $this->addTemplatePage($pdf, $pageTplIndex);
+        $cfg = is_array($this->layout['planets'] ?? null) ? $this->layout['planets'] : [];
+        $startY = (float) ($cfg['start_y'] ?? 48);
+        $lineH = (float) ($cfg['line_height'] ?? 26);
+        $x = (float) ($cfg['left_x'] ?? 36);
+        $w = (float) ($cfg['width'] ?? 214);
+        $max = max(1, (int) ($cfg['max_lines_per_page'] ?? 10));
+        $titleSize = (float) ($cfg['title_size'] ?? 11);
+        $bodySize = (float) ($cfg['body_size'] ?? 10);
+        $noteSize = (float) ($cfg['note_size'] ?? 9);
+        $titleColor = $this->rgb($cfg['title_color'] ?? [35, 32, 72]);
+        $metaColor = $this->rgb($cfg['meta_color'] ?? [120, 72, 55]);
+        $noteColor = $this->rgb($cfg['note_color'] ?? [55, 50, 70]);
+        $headingY = (float) ($cfg['heading_y'] ?? 28);
+        $headingSize = (float) ($cfg['heading_size'] ?? 16);
+        $headingColor = $this->rgb($cfg['heading_color'] ?? [35, 32, 72]);
+        $headings = is_array($cfg['heading'] ?? null) ? $cfg['heading'] : [];
+        $headingText = (string) ($headings[$locale] ?? ($locale === 'en' ? 'Planetary positions' : 'Posiciones planetarias'));
+
+        $frames = $this->contentFrames($templatePages);
+        $frameIdx = 0;
+        $this->addTemplatePage($pdf, $frames[$frameIdx]);
+        $this->stampSectionHeading($pdf, $headingText, $x, $w, $headingY, $headingSize, $headingColor);
 
         $y = $startY;
         $linesOnPage = 0;
 
         foreach ($bodies as $body) {
             if ($linesOnPage >= $max) {
-                $this->addTemplatePage($pdf, $pageTplIndex);
+                $frameIdx = ($frameIdx + 1) % count($frames);
+                $this->addTemplatePage($pdf, $frames[$frameIdx]);
+                $this->stampSectionHeading($pdf, $headingText, $x, $w, $headingY, $headingSize, $headingColor);
                 $y = $startY;
                 $linesOnPage = 0;
             }
@@ -176,7 +199,7 @@ final class NatalReportPdfService
             // Sign + degree
             $pdf->SetTextColor(...$metaColor);
             $pdf->SetFont('dejavusans', '', $bodySize);
-            $pdf->SetXY($x, $y + 5.2);
+            $pdf->SetXY($x, $y + 5.5);
             $pdf->Cell(
                 $w,
                 4.5,
@@ -189,12 +212,66 @@ final class NatalReportPdfService
             // Short interpretation
             $pdf->SetTextColor(...$noteColor);
             $pdf->SetFont('dejavusans', '', $noteSize);
-            $pdf->SetXY($x, $y + 10);
-            $pdf->MultiCell($w, 3.8, $note, 0, 'L', false, 1);
+            $pdf->SetXY($x, $y + 11);
+            $pdf->MultiCell($w, 4.0, $note, 0, 'L', false, 1);
 
             $y += $lineH;
             $linesOnPage++;
         }
+    }
+
+    /**
+     * Template page numbers used as blank content frames (fallback: last page, then 1).
+     *
+     * @return list<int>
+     */
+    private function contentFrames(int $templatePages): array
+    {
+        $configured = $this->intList($this->layout['content_pages'] ?? []);
+        $frames = [];
+        foreach ($configured as $pageNo) {
+            if ($pageNo >= 1 && $pageNo <= $templatePages) {
+                $frames[] = $pageNo;
+            }
+        }
+        if ($frames === []) {
+            $frames[] = $templatePages >= 1 ? $templatePages : 1;
+        }
+        return array_values(array_unique($frames));
+    }
+
+    /**
+     * @param mixed $value
+     * @return list<int>
+     */
+    private function intList(mixed $value): array
+    {
+        if (!is_array($value)) {
+            return [];
+        }
+        $out = [];
+        foreach ($value as $item) {
+            $out[] = (int) $item;
+        }
+        return $out;
+    }
+
+    /**
+     * @param array{0:int,1:int,2:int} $color
+     */
+    private function stampSectionHeading(
+        Fpdi $pdf,
+        string $text,
+        float $x,
+        float $w,
+        float $y,
+        float $size,
+        array $color,
+    ): void {
+        $pdf->SetTextColor(...$color);
+        $pdf->SetFont('dejavusans', 'B', $size);
+        $pdf->SetXY($x, $y);
+        $pdf->Cell($w, $size * 0.5, $text, 0, 0, 'L', false, '', 0, false, 'T', 'M');
     }
 
     private function addTemplatePage(Fpdi $pdf, int $templatePageNumber): void
@@ -218,12 +295,16 @@ final class NatalReportPdfService
         $w = (float) ($field['w'] ?? 170);
         $size = (float) ($field['size'] ?? 12);
         $style = (string) ($field['style'] ?? '');
+        $align = strtoupper((string) ($field['align'] ?? 'L'));
+        if (!in_array($align, ['L', 'C', 'R'], true)) {
+            $align = 'L';
+        }
         $color = $this->rgb($field['color'] ?? [40, 40, 40]);
 
         $pdf->SetTextColor(...$color);
         $pdf->SetFont('dejavusans', $style, $size);
         $pdf->SetXY($x, $y);
-        $pdf->Cell($w, $size * 0.45, $text, 0, 0, 'L', false, '', 0, false, 'T', 'M');
+        $pdf->Cell($w, $size * 0.45, $text, 0, 0, $align, false, '', 0, false, 'T', 'M');
     }
 
     /**
