@@ -23,11 +23,19 @@ final class HomeController extends Controller
         );
         $momentLabel = $formatter->format($sky->moment) ?: $sky->moment->format('Y-m-d');
 
+        $usingLiveApi = $sky->source === 'api';
+        $skySourceLabel = match ($sky->source) {
+            'api' => 'FreeAstroAPI · en vivo',
+            'mock-fallback' => 'Datos demo · respaldo local',
+            default => 'Datos demo · sin API key',
+        };
+
         $this->view('home/index', [
             'title' => 'Inicio',
             'sky' => $sky,
             'momentLabel' => \mb_strtoupper($momentLabel, 'UTF-8'),
-            'usingLiveApi' => $sky->source === 'api',
+            'usingLiveApi' => $usingLiveApi,
+            'skySourceLabel' => $skySourceLabel,
             'season' => $this->zodiacSeason($sky->moment),
             'pageClass' => 'page-home',
             'activeNav' => 'inicio',

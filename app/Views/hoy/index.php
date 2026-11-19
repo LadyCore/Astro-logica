@@ -2,8 +2,10 @@
 /** @var \App\Models\DailySky $sky */
 /** @var string $momentLabel */
 /** @var bool $usingLiveApi */
+/** @var string $skySourceLabel */
 
 $phase = $sky->lunarPhase;
+$skySourceLabel = $skySourceLabel ?? ($usingLiveApi ? 'FreeAstroAPI · en vivo' : 'Datos demo · sin API key');
 
 $signGlyphs = [
     'aries' => '♈', 'taurus' => '♉', 'gemini' => '♊', 'cancer' => '♋',
@@ -191,7 +193,7 @@ $interpFor = static function ($body) use ($interpretations): string {
         <h1 class="hoy-title">Cielo del día</h1>
         <p class="hoy-sub">La astrología de hoy, interpretada para ti.</p>
         <p class="sky-source <?= $usingLiveApi ? 'is-live' : 'is-mock' ?>">
-          <?= $usingLiveApi ? 'FreeAstroAPI · en vivo' : 'Datos demo · sin API key' ?>
+          <?= htmlspecialchars($skySourceLabel, ENT_QUOTES, 'UTF-8') ?>
         </p>
       </header>
 
