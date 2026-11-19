@@ -600,13 +600,17 @@ final class AstroService
                         : (is_string($decoded['message'] ?? null) ? (string) $decoded['message'] : '');
                 }
             }
-            $base = $result['error'] !== '' ? $result['error'] : 'Error al consultar el horóscopo';
             if ($result['http_code'] === 429) {
-                $base = 'La API alcanzó el límite de ritmo (≈1 req/s). Esperá un momento y reintentá.';
+                return [
+                    'error' => true,
+                    'message' => 'El cielo en vivo está ocupado. Esperá un momento y reintentá.',
+                    'http_code' => $result['http_code'],
+                ];
             }
+            $base = $result['error'] !== '' ? $result['error'] : 'Error al consultar el horóscopo';
             return [
                 'error' => true,
-                'message' => trim($base . ($detail !== '' ? ': ' . $detail : '') . ' (HTTP ' . $result['http_code'] . ')'),
+                'message' => $base,
                 'http_code' => $result['http_code'],
             ];
         }
