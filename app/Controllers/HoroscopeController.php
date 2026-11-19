@@ -25,7 +25,7 @@ final class HoroscopeController extends Controller
 
         if ($submitted) {
             if (!$astro->hasApiKey()) {
-                $error = 'Configurá FREE_ASTRO_API_KEY en .env para leer Tu Horóscopo.';
+                $error = 'Todavía no está configurada la conexión al cielo en vivo.';
             } else {
                 $raw = $astro->getDailySignHoroscope((string) $form['sign'], 'today', 'en');
                 if (!empty($raw['error'])) {

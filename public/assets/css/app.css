@@ -574,6 +574,37 @@ body.page-hoy .site-header {
   font-size: 0.9rem;
 }
 
+.chart-interp {
+  margin-top: 2.25rem;
+  padding-top: 0.5rem;
+}
+
+.chart-interp-head {
+  margin-bottom: 1rem;
+}
+
+.chart-interp-head h2 {
+  margin: 0;
+  font-family: "Cormorant Garamond", serif;
+  font-size: clamp(1.55rem, 2.4vw, 2rem);
+  font-weight: 600;
+  color: var(--gold-bright);
+}
+
+.chart-interp-head p {
+  margin: 0.35rem 0 0;
+  color: var(--text-muted);
+  max-width: 42ch;
+}
+
+.page-cartas .planet-grid {
+  margin-top: 0.75rem;
+}
+
+.page-cartas .planet-grid-outer {
+  margin-top: 0.85rem;
+}
+
 @media (max-width: 900px) {
   .feature-layout {
     grid-template-columns: 1fr;

@@ -37,13 +37,13 @@ $h = static fn (mixed $v): string => htmlspecialchars((string) $v, ENT_QUOTES, '
 ?>
 <section class="feature-page">
   <header class="feature-hero">
-    <p class="hoy-date">FREEASTROAPI · DAILY HOROSCOPE</p>
+    <p class="hoy-date">HORÓSCOPO DIARIO</p>
     <h1 class="hoy-title">Tu Horóscopo</h1>
     <p class="hoy-sub">El pulso diario de tu signo: amor, trabajo, dinero y salud.</p>
   </header>
 
   <?php if (!$apiReady): ?>
-    <p class="feature-banner is-warn">Falta la API key. Agregá <code>FREE_ASTRO_API_KEY</code> en <code>.env</code>.</p>
+    <p class="feature-banner is-warn">Todavía no está configurada la conexión al cielo en vivo.</p>
   <?php endif; ?>
   <?php if ($error): ?>
     <p class="feature-banner is-error"><?= $h($error) ?></p>

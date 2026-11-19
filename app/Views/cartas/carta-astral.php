@@ -2,20 +2,23 @@
 /** @var array<string, mixed> $form */
 /** @var bool $submitted */
 /** @var string|null $chartSvg */
-/** @var \App\Models\NatalChart|null $natal */
+/** @var list<\App\Models\PlanetPosition> $primaryBodies */
+/** @var list<\App\Models\PlanetPosition> $secondaryBodies */
 /** @var string|null $error */
 /** @var bool $apiReady */
 $mode = 'carta-astral';
+$primaryBodies = $primaryBodies ?? [];
+$secondaryBodies = $secondaryBodies ?? [];
 ?>
 <section class="feature-page">
   <header class="feature-hero">
-    <p class="hoy-date">FREEASTROAPI · BIRTH CHART</p>
+    <p class="hoy-date">MAPA NATAL</p>
     <h1 class="hoy-title">Carta Astral</h1>
     <p class="hoy-sub">Tu mapa natal calculado con precisión a partir de fecha, hora y lugar de nacimiento.</p>
   </header>
 
   <?php if (!$apiReady): ?>
-    <p class="feature-banner is-warn">Falta la API key. Agregá <code>FREE_ASTRO_API_KEY</code> en <code>.env</code>.</p>
+    <p class="feature-banner is-warn">Todavía no está configurada la conexión al cielo en vivo.</p>
   <?php endif; ?>
   <?php if ($error): ?>
     <p class="feature-banner is-error"><?= htmlspecialchars($error, ENT_QUOTES, 'UTF-8') ?></p>
@@ -36,8 +39,13 @@ $mode = 'carta-astral';
       <?php elseif ($submitted && !$error): ?>
         <p class="feature-empty">Generando…</p>
       <?php else: ?>
-        <p class="feature-empty">Completá tus datos para ver la rueda natal en estilo Ivory Ink.</p>
+        <p class="feature-empty">Completá tus datos para ver la rueda natal.</p>
       <?php endif; ?>
     </div>
   </div>
+
+  <?php
+  $sectionTitle = 'Interpretación de tu carta';
+  require dirname(__DIR__) . '/partials/planet-interpretations.php';
+  ?>
 </section>

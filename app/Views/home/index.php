@@ -167,11 +167,7 @@ $interpFor = static function ($body) use ($interpretations): string {
       <h2 id="home-teaser-title">Cielo del día</h2>
       <?php if ($showDemoNoKeyBadge || $usingLiveApi || $sky->source === 'mock-fallback'): ?>
         <p class="home-teaser-source <?= $usingLiveApi ? 'is-live' : 'is-mock' ?>">
-          <?php if ($showDemoNoKeyBadge): ?>
-            Datos demo · sin API key
-          <?php else: ?>
-            <?= htmlspecialchars($skySourceLabel ?? ($usingLiveApi ? 'FreeAstroAPI · en vivo' : 'Datos demo · respaldo local'), ENT_QUOTES, 'UTF-8') ?>
-          <?php endif; ?>
+          <?= htmlspecialchars($skySourceLabel ?? ($usingLiveApi ? 'Cielo en vivo' : 'Datos demo'), ENT_QUOTES, 'UTF-8') ?>
         </p>
       <?php endif; ?>
     </div>

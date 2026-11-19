@@ -9,9 +9,9 @@
 $phase = $sky->lunarPhase;
 $showDemoNoKeyBadge = $showDemoNoKeyBadge ?? ($sky->source === 'mock');
 $skySourceLabel = $skySourceLabel ?? match ($sky->source) {
-    'api' => 'FreeAstroAPI · en vivo',
+    'api' => 'Cielo en vivo',
     'mock-fallback' => 'Datos demo · respaldo local',
-    default => 'Datos demo · sin API key',
+    default => 'Datos demo',
 };
 
 $signGlyphs = [
@@ -207,11 +207,7 @@ $interpFor = static function ($body) use ($interpretations): string {
         <p class="hoy-sub">La astrología de hoy, interpretada para ti.</p>
         <?php if ($showDemoNoKeyBadge || $usingLiveApi || $sky->source === 'mock-fallback'): ?>
           <p class="sky-source <?= $usingLiveApi ? 'is-live' : 'is-mock' ?>">
-            <?php if ($showDemoNoKeyBadge): ?>
-              Datos demo · sin API key
-            <?php else: ?>
-              <?= htmlspecialchars($skySourceLabel, ENT_QUOTES, 'UTF-8') ?>
-            <?php endif; ?>
+            <?= htmlspecialchars($skySourceLabel, ENT_QUOTES, 'UTF-8') ?>
           </p>
         <?php endif; ?>
       </header>

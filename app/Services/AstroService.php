@@ -139,7 +139,7 @@ final class AstroService
     {
         if (!$this->hasApiKey()) {
             throw new RuntimeException(
-                'FREEASTROAPI_KEY is required for natal chart calculation.'
+                'Todavía no está configurada la conexión al cielo en vivo.'
             );
         }
 
@@ -471,6 +471,101 @@ final class AstroService
         $ttl = (int) ($api['chart_cache_seconds'] ?? 900);
         $this->writeChartCache($cacheKey, $svg, $ttl);
         return $svg;
+    }
+
+    /**
+     * Solar Return JSON (planets/houses) — /api/v1/western/solar/calculate
+     *
+     * @param array<string, mixed> $birthData
+     * @return array<string, mixed>
+     */
+    public function getSolarReturnData(array $birthData, int $year): array
+    {
+        if (!$this->hasApiKey()) {
+            return ['error' => true, 'message' => 'Falta configurar la clave del cielo en vivo.'];
+        }
+
+        $natal = $this->normalizeNatalPayload($birthData);
+        $api = $this->config['astro_api'] ?? [];
+        $tz = (string) ($natal['tz_str'] ?? $this->config['timezone'] ?? 'AUTO');
+        $city = (string) ($birthData['return_city'] ?? $natal['city'] ?? $api['sky_city'] ?? 'Buenos Aires');
+        $lat = (float) ($birthData['return_lat'] ?? $natal['lat'] ?? $api['sky_lat'] ?? -34.6037);
+        $lng = (float) ($birthData['return_lng'] ?? $natal['lng'] ?? $api['sky_lng'] ?? -58.3816);
+
+        $path = (string) ($api['solar_return_path'] ?? '/api/v1/western/solar/calculate');
+        $payload = [
+            'natal' => [
+                'name' => (string) ($natal['name'] ?? 'Subject'),
+                'year' => (int) $natal['year'],
+                'month' => (int) $natal['month'],
+                'day' => (int) $natal['day'],
+                'hour' => (int) ($natal['hour'] ?? 12),
+                'minute' => (int) ($natal['minute'] ?? 0),
+                'time_known' => (bool) ($natal['time_known'] ?? true),
+                'location' => [
+                    'city' => (string) ($natal['city'] ?? $city),
+                    'lat' => (float) ($natal['lat'] ?? $lat),
+                    'lng' => (float) ($natal['lng'] ?? $lng),
+                    'timezone' => $tz,
+                ],
+            ],
+            'solar_return' => [
+                'year' => $year,
+                'location' => [
+                    'city' => $city,
+                    'lat' => $lat,
+                    'lng' => $lng,
+                    'timezone' => $tz,
+                ],
+            ],
+        ];
+
+        return $this->request($path, $payload);
+    }
+
+    /**
+     * Transit-to-natal JSON — /api/v1/transits/calculate
+     *
+     * @param array<string, mixed> $birthData
+     * @return array<string, mixed>
+     */
+    public function getTransitsData(array $birthData, ?string $transitDate = null): array
+    {
+        if (!$this->hasApiKey()) {
+            return ['error' => true, 'message' => 'Falta configurar la clave del cielo en vivo.'];
+        }
+
+        $natal = $this->normalizeNatalPayload($birthData);
+        $api = $this->config['astro_api'] ?? [];
+        $tz = (string) ($this->config['timezone'] ?? 'America/Argentina/Buenos_Aires');
+        $when = $transitDate && $transitDate !== ''
+            ? $transitDate
+            : (new \DateTimeImmutable('now', new \DateTimeZone($tz)))->format('Y-m-d\TH:i');
+
+        $path = (string) ($api['transits_path'] ?? '/api/v1/transits/calculate');
+        $payload = [
+            'natal' => [
+                'name' => (string) ($natal['name'] ?? 'Subject'),
+                'year' => (int) $natal['year'],
+                'month' => (int) $natal['month'],
+                'day' => (int) $natal['day'],
+                'hour' => (int) ($natal['hour'] ?? 12),
+                'minute' => (int) ($natal['minute'] ?? 0),
+                'time_known' => (bool) ($natal['time_known'] ?? true),
+                'city' => (string) ($natal['city'] ?? ''),
+                'lat' => (float) ($natal['lat'] ?? $api['sky_lat'] ?? -34.6037),
+                'lng' => (float) ($natal['lng'] ?? $api['sky_lng'] ?? -58.3816),
+                'tz_str' => (string) ($natal['tz_str'] ?? $tz),
+            ],
+            'current_city' => (string) ($birthData['current_city'] ?? $api['sky_city'] ?? 'Buenos Aires'),
+            'current_lat' => (float) ($birthData['current_lat'] ?? $api['sky_lat'] ?? -34.6037),
+            'current_lng' => (float) ($birthData['current_lng'] ?? $api['sky_lng'] ?? -58.3816),
+            'transit_date' => $when,
+            'tz_str' => $tz,
+            'interpretation' => ['enable' => false],
+        ];
+
+        return $this->request($path, $payload);
     }
 
     /**

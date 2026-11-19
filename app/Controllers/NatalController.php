@@ -6,6 +6,7 @@ namespace App\Controllers;
 
 use App\Services\AstroService;
 use App\Support\BirthForm;
+use App\Support\PlanetMeanings;
 
 final class NatalController extends Controller
 {
@@ -18,21 +19,28 @@ final class NatalController extends Controller
             : $defaults;
 
         $chartSvg = null;
-        $natal = null;
+        $primaryBodies = [];
+        $secondaryBodies = [];
         $error = null;
         $astro = new AstroService($this->config);
 
         if ($submitted) {
             if (!$astro->hasApiKey()) {
-                $error = 'Configurá FREE_ASTRO_API_KEY en .env para calcular la carta astral.';
+                $error = 'Todavía no está configurada la conexión al cielo en vivo.';
             } else {
                 try {
                     $payload = BirthForm::toBirthPayload($form);
                     $natal = $astro->getNatalChart($payload);
+                    $planets = $natal->payload['planets'] ?? [];
+                    $split = PlanetMeanings::splitPrimarySecondary(
+                        PlanetMeanings::positionsFromApi(is_array($planets) ? $planets : [])
+                    );
+                    $primaryBodies = $split['primary'];
+                    $secondaryBodies = $split['secondary'];
                     usleep(1_100_000);
                     $chartSvg = $astro->getBirthChartSvg($payload, 'ivory-ink');
                     if ($chartSvg === null) {
-                        $error = 'La API devolvió datos, pero no el SVG de la carta. Probá de nuevo en unos segundos.';
+                        $error = 'Los datos llegaron, pero la rueda no. Probá de nuevo en unos segundos.';
                     }
                 } catch (\Throwable $e) {
                     $error = $e->getMessage();
@@ -48,7 +56,8 @@ final class NatalController extends Controller
             'form' => $form,
             'submitted' => $submitted,
             'chartSvg' => $chartSvg,
-            'natal' => $natal,
+            'primaryBodies' => $primaryBodies,
+            'secondaryBodies' => $secondaryBodies,
             'error' => $error,
             'apiReady' => $astro->hasApiKey(),
         ]);

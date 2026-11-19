@@ -2,19 +2,23 @@
 /** @var array<string, mixed> $form */
 /** @var bool $submitted */
 /** @var string|null $chartSvg */
+/** @var list<\App\Models\PlanetPosition> $primaryBodies */
+/** @var list<\App\Models\PlanetPosition> $secondaryBodies */
 /** @var string|null $error */
 /** @var bool $apiReady */
 $mode = 'transitos';
+$primaryBodies = $primaryBodies ?? [];
+$secondaryBodies = $secondaryBodies ?? [];
 ?>
 <section class="feature-page">
   <header class="feature-hero">
-    <p class="hoy-date">FREEASTROAPI · TRANSIT CHART</p>
+    <p class="hoy-date">CIELO SOBRE TU NATAL</p>
     <h1 class="hoy-title">Tránsitos</h1>
     <p class="hoy-sub">El cielo de ahora sobre tu carta natal: aspectos activos y bi-rueda en vivo.</p>
   </header>
 
   <?php if (!$apiReady): ?>
-    <p class="feature-banner is-warn">Falta la API key. Agregá <code>FREE_ASTRO_API_KEY</code> en <code>.env</code>.</p>
+    <p class="feature-banner is-warn">Todavía no está configurada la conexión al cielo en vivo.</p>
   <?php endif; ?>
   <?php if ($error): ?>
     <p class="feature-banner is-error"><?= htmlspecialchars($error, ENT_QUOTES, 'UTF-8') ?></p>
@@ -37,4 +41,9 @@ $mode = 'transitos';
       <?php endif; ?>
     </div>
   </div>
+
+  <?php
+  $sectionTitle = 'Interpretación de los tránsitos';
+  require dirname(__DIR__) . '/partials/planet-interpretations.php';
+  ?>
 </section>
