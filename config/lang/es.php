@@ -59,7 +59,7 @@ return [
     'horoscope.submit' => 'Ver horóscopo de hoy',
     'horoscope.theme' => 'Tema del día: :theme',
     'horoscope.overview' => 'Panorama',
-    'horoscope.insight' => 'Insight',
+    'horoscope.insight' => 'Clave',
     'horoscope.score.overall' => 'General',
     'horoscope.score.love' => 'Amor',
     'horoscope.score.career' => 'Carrera',
