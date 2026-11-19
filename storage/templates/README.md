@@ -9,11 +9,12 @@ storage/templates/reporte-cn.pdf
 ```
 
 Estructura esperada del export **REPORTE CN .pdf**:
-1. Portada (datos del consultante se estampan encima, zona libre)
-2. Intro Canva (queda en la plantilla; el PDF generado usa 1 → gráfico → interpretación)
-3–4. Marcos en blanco para el gráfico SVG y las posiciones planetarias
+1. Portada Canva (intacta, sin overlays)
+2. Intro “Tu Carta Natal” (intacta)
+3–4. Marcos en blanco para datos / gráfico / interpretación
 
-Orden del PDF generado: **Datos → Gráfico de carta → Interpretación**.
+Orden del PDF generado:
+1–2 Canva · **3 Datos** · **4 Gráfico** · **5+ Interpretación**
 
 Si re-exportás desde Canva, reemplazá este archivo y, si hace falta, retocá
 coordenadas en `config/natal_report.php` (mm desde la esquina superior izquierda).

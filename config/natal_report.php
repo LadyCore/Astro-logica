@@ -11,30 +11,38 @@ declare(strict_types=1);
  * Canva page size ≈ 285.75 × 357.19 mm (not A4). Coordinates are mm from top-left.
  *
  * Generated page order:
- *   1) Cover — datos del consultante (sobre el diseño, zona libre)
- *   2) Carta natal — gráfico SVG
- *   3+) Interpretación — posiciones planetarias
+ *   1–2) Plantilla Canva intacta (portada + intro) — SIN datos del usuario
+ *   3)   Datos del consultante (marco en blanco)
+ *   4)   Carta natal — gráfico SVG
+ *   5+)  Interpretación — posiciones planetarias
  *
- * Template pages: 1 cover · 2 intro (unused in export order) · 3–4 blank frames
+ * Template pages: 1 cover · 2 intro · 3–4 blank frames
  */
 return [
     'template' => dirname(__DIR__) . '/storage/templates/reporte-cn.pdf',
 
-    // Blank frames for chart + planet rows (cycled when needed).
+    // Blank frames for identity + chart + planet rows (cycled when needed).
     'content_pages' => [3, 4],
 
-    // Page 1 — identity in the empty band under the author block (drawn last = on top).
+    // From page 3 — identity on a blank Canva frame (centered, larger type).
     'cover' => [
+        'heading' => [
+            'es' => 'Datos del consultante',
+            'en' => 'Consultant details',
+        ],
+        'heading_y' => 48,
+        'heading_size' => 20,
+        'heading_color' => [28, 24, 68],
         'name' => [
-            'x' => 32, 'y' => 268, 'w' => 222, 'size' => 26, 'style' => 'B',
+            'x' => 32, 'y' => 120, 'w' => 222, 'size' => 28, 'style' => 'B',
             'align' => 'C', 'color' => [28, 24, 68],
         ],
         'birth_date' => [
-            'x' => 32, 'y' => 288, 'w' => 222, 'size' => 15, 'style' => '',
+            'x' => 32, 'y' => 150, 'w' => 222, 'size' => 16, 'style' => '',
             'align' => 'C', 'color' => [110, 62, 48],
         ],
         'place' => [
-            'x' => 32, 'y' => 302, 'w' => 222, 'size' => 14, 'style' => '',
+            'x' => 32, 'y' => 170, 'w' => 222, 'size' => 15, 'style' => '',
             'align' => 'C', 'color' => [55, 48, 90],
         ],
     ],

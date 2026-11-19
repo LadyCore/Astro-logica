@@ -13,9 +13,10 @@ use setasign\Fpdi\Tcpdf\Fpdi;
  * Builds a natal-chart PDF by stamping dynamic data onto a Canva PDF template (FPDI + TCPDF).
  *
  * Page order:
- *   1. Portada — datos del consultante (dibujados encima del diseño Canva)
- *   2. Gráfico de la carta natal (SVG)
- *   3+. Interpretación (posiciones + textos cortos)
+ *   1–2. Plantilla Canva intacta (portada + intro) — sin datos del usuario
+ *   3.   Datos del consultante (marco en blanco)
+ *   4.   Gráfico de la carta natal (SVG → PNG)
+ *   5+.  Interpretación (posiciones + textos cortos)
  *
  * Template: storage/templates/reporte-cn.pdf — tune coords in config/natal_report.php.
  */
@@ -85,14 +86,16 @@ final class NatalReportPdfService
         }
 
         try {
-            // 1) Datos del usuario — portada Canva, texto encima de todo.
+            // Hojas 1–2: Canva tal cual (portada + intro). Sin overlays.
             $this->addTemplatePage($pdf, 1);
-            $this->stampCover($pdf, $birth, $locale);
+            if ($pageCount >= 2) {
+                $this->addTemplatePage($pdf, 2);
+            }
 
-            // 2) Gráfico de la carta natal.
+            // A partir de la 3.ª hoja (marcos en blanco):
+            // datos → gráfico → interpretación.
+            $this->stampIdentity($pdf, $birth, $locale, $pageCount);
             $this->stampChart($pdf, $chartSvg, $locale, $pageCount);
-
-            // 3) Interpretación — posiciones planetarias.
             $this->stampPlanets($pdf, $bodies, $locale, $pageCount);
 
             return $pdf->Output('', 'S');
@@ -122,11 +125,25 @@ final class NatalReportPdfService
     }
 
     /**
+     * Página 3+ (marco en blanco): datos del consultante.
+     *
      * @param array<string, mixed> $birth
      */
-    private function stampCover(Fpdi $pdf, array $birth, string $locale): void
+    private function stampIdentity(Fpdi $pdf, array $birth, string $locale, int $templatePages): void
     {
         $cover = is_array($this->layout['cover'] ?? null) ? $this->layout['cover'] : [];
+        $frames = $this->contentFrames($templatePages);
+        $this->addTemplatePage($pdf, $frames[0]);
+
+        $headings = is_array($cover['heading'] ?? null) ? $cover['heading'] : [];
+        $headingText = (string) ($headings[$locale] ?? ($locale === 'en' ? 'Consultant' : 'Datos del consultante'));
+        $x = (float) (($cover['name']['x'] ?? null) ?? 32);
+        $w = (float) (($cover['name']['w'] ?? null) ?? 222);
+        $headingY = (float) ($cover['heading_y'] ?? 48);
+        $headingSize = (float) ($cover['heading_size'] ?? 20);
+        $headingColor = $this->rgb($cover['heading_color'] ?? [28, 24, 68]);
+        $this->stampSectionHeading($pdf, $headingText, $x, $w, $headingY, $headingSize, $headingColor);
+
         $name = (string) ($birth['name'] ?? ($locale === 'en' ? 'Guest' : 'Consultante'));
         $date = $this->formatBirthDate($birth, $locale);
         $place = trim((string) ($birth['city'] ?? ''));
@@ -134,7 +151,6 @@ final class NatalReportPdfService
             $place = $locale === 'en' ? 'Location not set' : 'Lugar no indicado';
         }
 
-        // Drawn after useTemplate → sits on top of Canva artwork.
         $this->writeField($pdf, $cover['name'] ?? [], $name);
         $this->writeField($pdf, $cover['birth_date'] ?? [], $date);
         $this->writeField($pdf, $cover['place'] ?? [], $place);
