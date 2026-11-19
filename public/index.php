@@ -9,7 +9,7 @@ $uri = rtrim($uri, '/') ?: '/';
 $method = strtoupper($_SERVER['REQUEST_METHOD'] ?? 'GET');
 
 $routes = [
-    'GET /' => [\App\Controllers\HoyController::class, 'index'],
+    'GET /' => [\App\Controllers\HomeController::class, 'index'],
     'GET /hoy' => [\App\Controllers\HoyController::class, 'index'],
     'GET /cielo-del-dia' => [\App\Controllers\HoyController::class, 'index'],
     'GET /carta-natal' => [\App\Controllers\NatalController::class, 'index'],

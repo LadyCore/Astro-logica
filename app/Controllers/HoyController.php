@@ -26,7 +26,7 @@ final class HoyController extends Controller
         $this->view('hoy/index', [
             'title' => 'Cielo del día',
             'sky' => $sky,
-            'momentLabel' => mb_strtoupper($momentLabel, 'UTF-8'),
+            'momentLabel' => \mb_strtoupper($momentLabel, 'UTF-8'),
             'usingLiveApi' => $sky->source === 'api',
             'pageClass' => 'page-hoy',
             'activeNav' => 'hoy',

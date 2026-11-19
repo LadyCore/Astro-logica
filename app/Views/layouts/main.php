@@ -40,7 +40,7 @@ $contentFile = $templateFile ?? null;
   </div>
 
   <header class="site-header">
-    <a class="brand" href="/hoy">
+    <a class="brand" href="/">
       <span class="brand-star" aria-hidden="true">
         <svg viewBox="0 0 32 32" width="28" height="28" fill="none">
           <circle cx="16" cy="16" r="3" fill="currentColor"/>
@@ -55,7 +55,7 @@ $contentFile = $templateFile ?? null;
     </a>
 
     <nav class="site-nav" aria-label="Principal">
-      <a href="/hoy" class="nav-link<?= $activeNav === 'hoy' ? ' is-active' : '' ?>">Inicio</a>
+      <a href="/" class="nav-link<?= $activeNav === 'inicio' ? ' is-active' : '' ?>">Inicio</a>
       <a href="/hoy" class="nav-link<?= $activeNav === 'hoy' ? ' is-active' : '' ?>">Cielo del día</a>
       <a href="/carta-natal" class="nav-link<?= $activeNav === 'cartas' ? ' is-active' : '' ?>">Cartas</a>
       <span class="nav-link is-muted" title="Próximamente">Tránsitos</span>
