@@ -6,6 +6,8 @@
 .DS_Store
 /storage/cache/*
 !/storage/cache/.gitkeep
+!/storage/templates/
+!/storage/templates/**
 
 # local screenshot helpers
 public/_shot/

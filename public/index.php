@@ -15,8 +15,10 @@ $routes = [
 
     'GET /carta-astral' => [\App\Controllers\NatalController::class, 'index'],
     'POST /carta-astral' => [\App\Controllers\NatalController::class, 'index'],
+    'POST /carta-astral/pdf' => [\App\Controllers\NatalController::class, 'pdf'],
     'GET /carta-natal' => [\App\Controllers\NatalController::class, 'index'],
     'POST /carta-natal' => [\App\Controllers\NatalController::class, 'index'],
+    'POST /carta-natal/pdf' => [\App\Controllers\NatalController::class, 'pdf'],
 
     'GET /revolucion-solar' => [\App\Controllers\SolarController::class, 'index'],
     'POST /revolucion-solar' => [\App\Controllers\SolarController::class, 'index'],

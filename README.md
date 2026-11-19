@@ -32,9 +32,20 @@ FREE_ASTRO_API_KEY=tu_api_key_aqui
 
 Never put the key in browser / `NEXT_PUBLIC_*` / client JS. Docs map: https://www.freeastroapi.com/llms.txt — Cielo del día uses `POST /api/v1/ephemeris/calculate`. Empty key → local mock + **Datos demo · sin API key**.
 
+## Natal PDF report
+
+Carta Astral can download a PDF stamped onto a Canva template (FPDI + TCPDF).
+
+1. Export **REPORTE CN .pdf** from Canva.
+2. Place it at `storage/templates/reporte-cn.pdf` (overwrite the starter PDF).
+3. Tune overlay coordinates in `config/natal_report.php` (mm from top-left).
+4. On **Carta Astral**, use **Descargar reporte PDF** (POST `/carta-astral/pdf`).
+
+Code: `app/Services/NatalReportPdfService.php` + `NatalController::pdf()`.
+
 ## Architecture
 
-Controllers / Services / Models / Views. Daily sky ≠ natal chart. Natal UI is stubbed; `AstroService::getNatalChart()` is ready.
+Controllers / Services / Models / Views. Daily sky ≠ natal chart. Natal UI uses `AstroService::getNatalChart()`.
 
 ### AstroService
 

@@ -47,4 +47,7 @@ return [
     ],
 
     'database' => require __DIR__ . '/database.php',
+
+    // Natal PDF overlay layout (Canva template + stamp coordinates).
+    'natal_report' => require __DIR__ . '/natal_report.php',
 ];

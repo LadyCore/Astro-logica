@@ -35,6 +35,9 @@ return [
     'carta.empty' => 'Enter your details to see the natal wheel.',
     'carta.interp_title' => 'Chart interpretation',
     'carta.generating' => 'Generating…',
+    'carta.pdf_download' => 'Download PDF report',
+    'carta.pdf_missing' => 'Missing PDF template at storage/templates/reporte-cn.pdf',
+    'carta.pdf_need_chart' => 'Set the API key to enable PDF download.',
 
     'solar.eyebrow' => 'Chart of the year',
     'solar.title' => 'Solar Return',

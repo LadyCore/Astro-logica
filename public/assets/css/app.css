@@ -411,6 +411,28 @@ body.page-hoy .site-header {
   border-color: var(--gold);
 }
 
+.astro-submit-secondary {
+  margin-top: 0.65rem;
+  background: transparent;
+  border-style: dashed;
+}
+
+.astro-submit-secondary:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.astro-submit + .astro-submit-secondary {
+  margin-top: 0.65rem;
+}
+
+.form-hint {
+  margin: 0.75rem 0 0;
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  line-height: 1.45;
+}
+
 .feature-result {
   min-height: 320px;
   display: grid;

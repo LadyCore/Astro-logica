@@ -35,6 +35,9 @@ return [
     'carta.empty' => 'Completá tus datos para ver la rueda natal.',
     'carta.interp_title' => 'Interpretación de tu carta',
     'carta.generating' => 'Generando…',
+    'carta.pdf_download' => 'Descargar reporte PDF',
+    'carta.pdf_missing' => 'Falta la plantilla PDF en storage/templates/reporte-cn.pdf',
+    'carta.pdf_need_chart' => 'Configurá la API key para habilitar la descarga del PDF.',
 
     'solar.eyebrow' => 'Carta del año',
     'solar.title' => 'Revolución Solar',
