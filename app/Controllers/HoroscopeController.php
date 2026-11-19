@@ -6,6 +6,7 @@ namespace App\Controllers;
 
 use App\Services\AstroService;
 use App\Support\BirthForm;
+use App\Support\HoroscopeLocalizer;
 
 final class HoroscopeController extends Controller
 {
@@ -27,13 +28,17 @@ final class HoroscopeController extends Controller
             if (!$astro->hasApiKey()) {
                 $error = $this->t('api.missing');
             } else {
+                // Provider daily-sign languages: en/fr/it/hi (no Spanish). Fetch EN, then localize.
                 $raw = $astro->getDailySignHoroscope((string) $form['sign'], 'today', 'en');
                 if (!empty($raw['error'])) {
                     $error = is_string($raw['message'] ?? null)
                         ? (string) $raw['message']
                         : $this->t('api.chart_missing');
                 } else {
-                    $horoscope = $raw['data'] ?? $raw;
+                    $data = $raw['data'] ?? $raw;
+                    $horoscope = is_array($data)
+                        ? (new HoroscopeLocalizer())->localize($data, $this->lang())
+                        : null;
                 }
             }
         }
