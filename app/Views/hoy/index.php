@@ -2,10 +2,16 @@
 /** @var \App\Models\DailySky $sky */
 /** @var string $momentLabel */
 /** @var bool $usingLiveApi */
+/** @var bool $showDemoNoKeyBadge */
 /** @var string $skySourceLabel */
 
 $phase = $sky->lunarPhase;
-$skySourceLabel = $skySourceLabel ?? ($usingLiveApi ? 'FreeAstroAPI · en vivo' : 'Datos demo · sin API key');
+$showDemoNoKeyBadge = $showDemoNoKeyBadge ?? ($sky->source === 'mock');
+$skySourceLabel = $skySourceLabel ?? match ($sky->source) {
+    'api' => 'FreeAstroAPI · en vivo',
+    'mock-fallback' => 'Datos demo · respaldo local',
+    default => 'Datos demo · sin API key',
+};
 
 $signGlyphs = [
     'aries' => '♈', 'taurus' => '♉', 'gemini' => '♊', 'cancer' => '♋',
@@ -192,9 +198,15 @@ $interpFor = static function ($body) use ($interpretations): string {
         <p class="hoy-date"><?= htmlspecialchars($momentLabel, ENT_QUOTES, 'UTF-8') ?></p>
         <h1 class="hoy-title">Cielo del día</h1>
         <p class="hoy-sub">La astrología de hoy, interpretada para ti.</p>
-        <p class="sky-source <?= $usingLiveApi ? 'is-live' : 'is-mock' ?>">
-          <?= htmlspecialchars($skySourceLabel, ENT_QUOTES, 'UTF-8') ?>
-        </p>
+        <?php if ($showDemoNoKeyBadge || $usingLiveApi || $sky->source === 'mock-fallback'): ?>
+          <p class="sky-source <?= $usingLiveApi ? 'is-live' : 'is-mock' ?>">
+            <?php if ($showDemoNoKeyBadge): ?>
+              Datos demo · sin API key
+            <?php else: ?>
+              <?= htmlspecialchars($skySourceLabel, ENT_QUOTES, 'UTF-8') ?>
+            <?php endif; ?>
+          </p>
+        <?php endif; ?>
       </header>
 
       <article class="moon-card" data-phase="<?= htmlspecialchars($phase->slug, ENT_QUOTES, 'UTF-8') ?>">

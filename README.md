@@ -16,12 +16,20 @@ php -S 127.0.0.1:8080 -t public public/router.php
 
 Open http://127.0.0.1:8080/hoy
 
-## Env
+## Env / API key
+
+Copy `.env.example` → `.env` (gitignored) and set:
+
+```bash
+FREEASTROAPI_KEY=tu_api_key_aqui
+```
 
 | Variable | Purpose |
 | --- | --- |
 | `FREEASTROAPI_KEY` | Live FreeAstroAPI (`x-api-key`). Aliases: `FREE_ASTRO_API_KEY`, `FREEASTRO_API_KEY` |
 | `FREEASTROAPI_BASE_URL` | Default `https://api.freeastroapi.com` |
+
+Get a key from the FreeAstroAPI dashboard. With the key set, `getDailySky()` calls the real ephemeris API; empty key keeps the local mock and shows **Datos demo · sin API key** on Hoy.
 
 ## Architecture
 

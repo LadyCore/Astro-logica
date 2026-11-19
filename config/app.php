@@ -25,7 +25,7 @@ return [
     'astro_api' => [
         'base_url' => rtrim((string) $env('FREEASTROAPI_BASE_URL', 'https://api.freeastroapi.com'), '/'),
         'api_key' => $apiKey ? (string) $apiKey : null,
-        'timeout' => 12,
+        'timeout' => 15,
         'ephemeris_path' => '/api/v1/ephemeris/calculate',
         'natal_path' => '/api/v1/natal/calculate',
         'bodies' => [

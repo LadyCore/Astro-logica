@@ -24,6 +24,7 @@ final class HomeController extends Controller
         $momentLabel = $formatter->format($sky->moment) ?: $sky->moment->format('Y-m-d');
 
         $usingLiveApi = $sky->source === 'api';
+        $showDemoNoKeyBadge = $sky->source === 'mock';
         $skySourceLabel = match ($sky->source) {
             'api' => 'FreeAstroAPI · en vivo',
             'mock-fallback' => 'Datos demo · respaldo local',
@@ -35,6 +36,7 @@ final class HomeController extends Controller
             'sky' => $sky,
             'momentLabel' => \mb_strtoupper($momentLabel, 'UTF-8'),
             'usingLiveApi' => $usingLiveApi,
+            'showDemoNoKeyBadge' => $showDemoNoKeyBadge,
             'skySourceLabel' => $skySourceLabel,
             'season' => $this->zodiacSeason($sky->moment),
             'pageClass' => 'page-home',

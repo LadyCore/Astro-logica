@@ -103,25 +103,27 @@ final class AstroService
     }
 
     /**
-     * Raw ephemeris call matching the FreeAstroAPI calculate contract
-     * (date + location + house system). Returns decoded JSON or an error array.
+     * Raw ephemeris snapshot (FreeAstroAPI JSON) or error array.
      *
      * @return array<string, mixed>
      */
     public function getDailySkyRaw(?string $date = null): array
     {
-        $date ??= (new \DateTimeImmutable('now', new \DateTimeZone(
-            (string) ($this->config['timezone'] ?? 'UTC')
-        )))->format('Y-m-d');
+        $tz = new \DateTimeZone((string) ($this->config['timezone'] ?? 'UTC'));
+        if ($date !== null && $date !== '') {
+            $moment = new \DateTimeImmutable($date . ' 12:00:00', $tz);
+        } else {
+            $moment = new \DateTimeImmutable('now', $tz);
+        }
 
-        $payload = [
-            'date' => $date,
-            'latitude' => 0,
-            'longitude' => 0,
-            'house_system' => 'P',
+        $api = $this->config['astro_api'] ?? [];
+        $path = (string) ($api['ephemeris_path'] ?? '/api/v1/ephemeris/calculate');
+        $bodiesList = $api['bodies'] ?? [
+            'Sun', 'Moon', 'Mercury', 'Venus', 'Mars',
+            'Jupiter', 'Saturn', 'Uranus', 'Neptune', 'Pluto',
         ];
 
-        return $this->request('/api/v1/ephemeris/calculate', $payload);
+        return $this->request($path, $this->ephemerisPayload($moment, $bodiesList));
     }
 
     /**
@@ -192,8 +194,7 @@ final class AstroService
             CURLOPT_HTTPHEADER => [
                 'Content-Type: application/json',
                 'Accept: application/json',
-                // FreeAstroAPI accepts x-api-key; Bearer kept for the documented client shape.
-                'Authorization: Bearer ' . $this->apiKey,
+                // FreeAstroAPI auth: https://www.freeastroapi.com/docs/auth
                 'x-api-key: ' . $this->apiKey,
             ],
             CURLOPT_POSTFIELDS => json_encode($payload, JSON_THROW_ON_ERROR),
@@ -223,29 +224,14 @@ final class AstroService
     private function fetchDailySkyFromApi(\DateTimeImmutable $moment): DailySky
     {
         $api = $this->config['astro_api'] ?? [];
-        $start = $moment->setTimezone(new \DateTimeZone('UTC'))->format('Y-m-d\TH:i:s\Z');
         $bodiesList = $api['bodies'] ?? [
             'Sun', 'Moon', 'Mercury', 'Venus', 'Mars',
             'Jupiter', 'Saturn', 'Uranus', 'Neptune', 'Pluto',
         ];
         $path = (string) ($api['ephemeris_path'] ?? '/api/v1/ephemeris/calculate');
+        $start = $moment->setTimezone(new \DateTimeZone('UTC'))->format('Y-m-d\TH:i:s\Z');
 
-        $payload = [
-            'start' => $start,
-            'bodies' => $bodiesList,
-            'format' => 'json',
-            'zodiac_type' => 'tropical',
-            'include_retrograde' => true,
-            'include_sign_degree' => true,
-            'include_moon_void_of_course' => true,
-            // Also send the simpler shape from the documented client.
-            'date' => $moment->format('Y-m-d'),
-            'latitude' => 0,
-            'longitude' => 0,
-            'house_system' => 'P',
-        ];
-
-        $raw = $this->request($path, $payload);
+        $raw = $this->request($path, $this->ephemerisPayload($moment, $bodiesList));
         if (!empty($raw['error'])) {
             $msg = is_string($raw['message'] ?? null) ? $raw['message'] : 'Ephemeris API error';
             throw new RuntimeException($msg . (isset($raw['http_code']) ? ' (HTTP ' . $raw['http_code'] . ')' : ''));
@@ -274,6 +260,10 @@ final class AstroService
             );
         }
 
+        if ($bodies === []) {
+            throw new RuntimeException('Ephemeris response had no parseable bodies.');
+        }
+
         $phaseRaw = $data['astrology']['moon_phase'] ?? null;
         $lunarPhase = $this->normalizeLunarPhase(
             is_array($phaseRaw) ? $phaseRaw : null,
@@ -293,6 +283,23 @@ final class AstroService
                 'notable' => $data['astrology']['notable_conditions'] ?? [],
             ],
         );
+    }
+
+    /**
+     * Documented FreeAstroAPI ephemeris JSON snapshot payload.
+     *
+     * @param list<string> $bodiesList
+     * @return array<string, mixed>
+     */
+    private function ephemerisPayload(\DateTimeImmutable $moment, array $bodiesList): array
+    {
+        return [
+            'start' => $moment->setTimezone(new \DateTimeZone('UTC'))->format('Y-m-d\TH:i:s\Z'),
+            'bodies' => $bodiesList,
+            'format' => 'json',
+            'zodiac_type' => 'tropical',
+            'include_moon_void_of_course' => true,
+        ];
     }
 
     /**

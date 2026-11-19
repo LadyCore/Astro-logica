@@ -26,7 +26,9 @@ final class HoyController extends Controller
         );
         $momentLabel = $formatter->format($sky->moment) ?: $sky->moment->format('Y-m-d');
 
+        // Badge "Datos demo · sin API key" solo cuando source === mock (sin key).
         $usingLiveApi = $sky->source === 'api';
+        $showDemoNoKeyBadge = $sky->source === 'mock';
         $skySourceLabel = match ($sky->source) {
             'api' => 'FreeAstroAPI · en vivo',
             'mock-fallback' => 'Datos demo · respaldo local',
@@ -38,6 +40,7 @@ final class HoyController extends Controller
             'sky' => $sky,
             'momentLabel' => \mb_strtoupper($momentLabel, 'UTF-8'),
             'usingLiveApi' => $usingLiveApi,
+            'showDemoNoKeyBadge' => $showDemoNoKeyBadge,
             'skySourceLabel' => $skySourceLabel,
             'pageClass' => 'page-hoy',
             'activeNav' => 'hoy',

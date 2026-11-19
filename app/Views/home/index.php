@@ -2,8 +2,11 @@
 /** @var \App\Models\DailySky $sky */
 /** @var string $momentLabel */
 /** @var bool $usingLiveApi */
+/** @var bool $showDemoNoKeyBadge */
 /** @var string $skySourceLabel */
 /** @var array{slug:string,name:string,range:string,blurb:string,glyph:string} $season */
+
+$showDemoNoKeyBadge = $showDemoNoKeyBadge ?? ($sky->source === 'mock');
 
 $phase = $sky->lunarPhase;
 
@@ -162,9 +165,15 @@ $interpFor = static function ($body) use ($interpretations): string {
     <div class="home-teaser-date">
       <p class="home-teaser-when"><?= htmlspecialchars($momentLabel, ENT_QUOTES, 'UTF-8') ?></p>
       <h2 id="home-teaser-title">Cielo del día</h2>
-      <p class="home-teaser-source <?= $usingLiveApi ? 'is-live' : 'is-mock' ?>">
-        <?= htmlspecialchars($skySourceLabel ?? ($usingLiveApi ? 'FreeAstroAPI · en vivo' : 'Datos demo · sin API key'), ENT_QUOTES, 'UTF-8') ?>
-      </p>
+      <?php if ($showDemoNoKeyBadge || $usingLiveApi || $sky->source === 'mock-fallback'): ?>
+        <p class="home-teaser-source <?= $usingLiveApi ? 'is-live' : 'is-mock' ?>">
+          <?php if ($showDemoNoKeyBadge): ?>
+            Datos demo · sin API key
+          <?php else: ?>
+            <?= htmlspecialchars($skySourceLabel ?? ($usingLiveApi ? 'FreeAstroAPI · en vivo' : 'Datos demo · respaldo local'), ENT_QUOTES, 'UTF-8') ?>
+          <?php endif; ?>
+        </p>
+      <?php endif; ?>
     </div>
     <div class="home-teaser-phase" data-phase="<?= htmlspecialchars($phase->slug, ENT_QUOTES, 'UTF-8') ?>">
       <p class="eyebrow">Fase lunar</p>
