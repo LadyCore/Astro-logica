@@ -18,6 +18,22 @@
     });
   }
 
+  // Language preference (cookie + localStorage); server renders via ?lang=
+  document.querySelectorAll(".lang-btn[data-lang]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const next = btn.getAttribute("data-lang");
+      if (next !== "es" && next !== "en") return;
+      try {
+        localStorage.setItem("astro-lang", next);
+        document.cookie = `astro_lang=${next};path=/;max-age=31536000;samesite=lax`;
+      } catch (_) {}
+    });
+  });
+  try {
+    const serverLang = document.documentElement.getAttribute("data-lang") || "es";
+    localStorage.setItem("astro-lang", serverLang);
+  } catch (_) {}
+
   // Cartas dropdown
   const drop = document.querySelector(".nav-dropdown");
   const dropBtn = document.getElementById("cartas-toggle");

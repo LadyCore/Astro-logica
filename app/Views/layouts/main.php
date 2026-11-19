@@ -4,16 +4,36 @@
 /** @var string $appName */
 /** @var string $tagline */
 /** @var string $activeNav */
+/** @var string $activeCard */
+/** @var \App\Support\I18n $i18n */
+/** @var callable(string, array=): string $t */
+/** @var string $lang */
+
 $appName = $appName ?? 'Astro-lógica';
-$tagline = $tagline ?? 'Con los Pies en la Tierra y el Corazón en las Estrellas';
+$i18n = $i18n ?? new \App\Support\I18n();
+$lang = $lang ?? $i18n->locale();
+$t = $t ?? static fn (string $key, array $replace = []): string => $i18n->t($key, $replace);
+$tagline = $tagline ?? $t('tagline');
 $pageClass = $pageClass ?? '';
 $activeNav = $activeNav ?? '';
 $activeCard = $activeCard ?? '';
 $title = $title ?? $appName;
 $contentFile = $templateFile ?? null;
+
+$langSwitchUrl = static function (string $code) use ($lang): string {
+    $uri = $_SERVER['REQUEST_URI'] ?? '/';
+    $parts = parse_url($uri);
+    $path = $parts['path'] ?? '/';
+    $query = [];
+    if (!empty($parts['query'])) {
+        parse_str($parts['query'], $query);
+    }
+    $query['lang'] = $code;
+    return $path . '?' . http_build_query($query);
+};
 ?>
 <!DOCTYPE html>
-<html lang="es" data-theme="dark">
+<html lang="<?= htmlspecialchars($lang, ENT_QUOTES, 'UTF-8') ?>" data-theme="dark" data-lang="<?= htmlspecialchars($lang, ENT_QUOTES, 'UTF-8') ?>">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -30,6 +50,10 @@ $contentFile = $templateFile ?? null;
         var stored = localStorage.getItem('astro-theme');
         var theme = stored || 'dark';
         document.documentElement.setAttribute('data-theme', theme);
+        var lang = localStorage.getItem('astro-lang');
+        if (lang === 'es' || lang === 'en') {
+          document.documentElement.setAttribute('data-lang', lang);
+        }
       } catch (e) {}
     })();
   </script>
@@ -55,9 +79,9 @@ $contentFile = $templateFile ?? null;
       </span>
     </a>
 
-    <nav class="site-nav" aria-label="Principal">
-      <a href="/" class="nav-link<?= $activeNav === 'inicio' ? ' is-active' : '' ?>">Inicio</a>
-      <a href="/hoy" class="nav-link<?= $activeNav === 'hoy' ? ' is-active' : '' ?>">Cielo del día</a>
+    <nav class="site-nav" aria-label="<?= htmlspecialchars($t('nav.aria'), ENT_QUOTES, 'UTF-8') ?>">
+      <a href="/" class="nav-link<?= $activeNav === 'inicio' ? ' is-active' : '' ?>"><?= htmlspecialchars($t('nav.home'), ENT_QUOTES, 'UTF-8') ?></a>
+      <a href="/hoy" class="nav-link<?= $activeNav === 'hoy' ? ' is-active' : '' ?>"><?= htmlspecialchars($t('nav.hoy'), ENT_QUOTES, 'UTF-8') ?></a>
 
       <div class="nav-dropdown<?= $activeNav === 'cartas' ? ' is-active' : '' ?>">
         <button
@@ -68,21 +92,37 @@ $contentFile = $templateFile ?? null;
           aria-controls="cartas-menu"
           id="cartas-toggle"
         >
-          Cartas
+          <?= htmlspecialchars($t('nav.cartas'), ENT_QUOTES, 'UTF-8') ?>
           <span class="nav-caret" aria-hidden="true"></span>
         </button>
         <div class="nav-dropdown-menu" id="cartas-menu" role="menu" hidden>
-          <a href="/carta-astral" class="nav-dropdown-item<?= ($activeCard ?? '') === 'carta-astral' ? ' is-active' : '' ?>" role="menuitem">Carta Astral</a>
-          <a href="/revolucion-solar" class="nav-dropdown-item<?= ($activeCard ?? '') === 'revolucion-solar' ? ' is-active' : '' ?>" role="menuitem">Revolución Solar</a>
-          <a href="/transitos" class="nav-dropdown-item<?= ($activeCard ?? '') === 'transitos' ? ' is-active' : '' ?>" role="menuitem">Tránsitos</a>
+          <a href="/carta-astral" class="nav-dropdown-item<?= ($activeCard ?? '') === 'carta-astral' ? ' is-active' : '' ?>" role="menuitem"><?= htmlspecialchars($t('nav.carta_astral'), ENT_QUOTES, 'UTF-8') ?></a>
+          <a href="/revolucion-solar" class="nav-dropdown-item<?= ($activeCard ?? '') === 'revolucion-solar' ? ' is-active' : '' ?>" role="menuitem"><?= htmlspecialchars($t('nav.revolucion_solar'), ENT_QUOTES, 'UTF-8') ?></a>
+          <a href="/transitos" class="nav-dropdown-item<?= ($activeCard ?? '') === 'transitos' ? ' is-active' : '' ?>" role="menuitem"><?= htmlspecialchars($t('nav.transitos'), ENT_QUOTES, 'UTF-8') ?></a>
         </div>
       </div>
 
-      <a href="/tu-horoscopo" class="nav-link<?= $activeNav === 'horoscopo' ? ' is-active' : '' ?>">Tu Horóscopo</a>
+      <a href="/tu-horoscopo" class="nav-link<?= $activeNav === 'horoscopo' ? ' is-active' : '' ?>"><?= htmlspecialchars($t('nav.horoscopo'), ENT_QUOTES, 'UTF-8') ?></a>
     </nav>
 
     <div class="header-actions">
-      <button type="button" class="icon-btn theme-toggle" id="theme-toggle" aria-label="Cambiar tema">
+      <div class="lang-switch" role="group" aria-label="<?= htmlspecialchars($t('lang.label'), ENT_QUOTES, 'UTF-8') ?>">
+        <a
+          href="<?= htmlspecialchars($langSwitchUrl('es'), ENT_QUOTES, 'UTF-8') ?>"
+          class="lang-btn<?= $lang === 'es' ? ' is-active' : '' ?>"
+          data-lang="es"
+          hreflang="es"
+          lang="es"
+        ><?= htmlspecialchars($t('lang.es'), ENT_QUOTES, 'UTF-8') ?></a>
+        <a
+          href="<?= htmlspecialchars($langSwitchUrl('en'), ENT_QUOTES, 'UTF-8') ?>"
+          class="lang-btn<?= $lang === 'en' ? ' is-active' : '' ?>"
+          data-lang="en"
+          hreflang="en"
+          lang="en"
+        ><?= htmlspecialchars($t('lang.en'), ENT_QUOTES, 'UTF-8') ?></a>
+      </div>
+      <button type="button" class="icon-btn theme-toggle" id="theme-toggle" aria-label="<?= htmlspecialchars($t('theme.toggle'), ENT_QUOTES, 'UTF-8') ?>">
         <span class="theme-icon" aria-hidden="true"></span>
       </button>
     </div>

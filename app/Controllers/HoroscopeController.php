@@ -25,13 +25,13 @@ final class HoroscopeController extends Controller
 
         if ($submitted) {
             if (!$astro->hasApiKey()) {
-                $error = 'Todavía no está configurada la conexión al cielo en vivo.';
+                $error = $this->t('api.missing');
             } else {
                 $raw = $astro->getDailySignHoroscope((string) $form['sign'], 'today', 'en');
                 if (!empty($raw['error'])) {
                     $error = is_string($raw['message'] ?? null)
                         ? (string) $raw['message']
-                        : 'No se pudo obtener el horóscopo diario.';
+                        : $this->t('api.chart_missing');
                 } else {
                     $horoscope = $raw['data'] ?? $raw;
                 }
@@ -39,7 +39,7 @@ final class HoroscopeController extends Controller
         }
 
         $this->view('cartas/tu-horoscopo', [
-            'title' => 'Tu Horóscopo',
+            'title' => $this->t('horoscope.title'),
             'pageClass' => 'page-cartas page-horoscopo',
             'activeNav' => 'horoscopo',
             'activeCard' => 'horoscopo',

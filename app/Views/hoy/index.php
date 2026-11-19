@@ -8,10 +8,14 @@
 
 $phase = $sky->lunarPhase;
 $showDemoNoKeyBadge = $showDemoNoKeyBadge ?? ($sky->source === 'mock');
+/** @var callable(string, array=): string $t */
+/** @var string $lang */
+$t = $t ?? static fn (string $key, array $replace = []): string => $key;
+$lang = $lang ?? 'es';
 $skySourceLabel = $skySourceLabel ?? match ($sky->source) {
-    'api' => 'Cielo en vivo',
-    'mock-fallback' => 'Datos demo · respaldo local',
-    default => 'Datos demo',
+    'api' => $t('hoy.live'),
+    'mock-fallback' => $t('hoy.demo_fallback'),
+    default => $t('hoy.demo'),
 };
 
 $signGlyphs = [
@@ -203,8 +207,8 @@ $interpFor = static function ($body) use ($interpretations): string {
     <div class="hoy-stack">
       <header class="hoy-heading">
         <p class="hoy-date"><?= htmlspecialchars($momentLabel, ENT_QUOTES, 'UTF-8') ?></p>
-        <h1 class="hoy-title">Cielo del día</h1>
-        <p class="hoy-sub">La astrología de hoy, interpretada para ti.</p>
+        <h1 class="hoy-title"><?= htmlspecialchars($t('hoy.title'), ENT_QUOTES, 'UTF-8') ?></h1>
+        <p class="hoy-sub"><?= htmlspecialchars($t('hoy.sub'), ENT_QUOTES, 'UTF-8') ?></p>
         <?php if ($showDemoNoKeyBadge || $usingLiveApi || $sky->source === 'mock-fallback'): ?>
           <p class="sky-source <?= $usingLiveApi ? 'is-live' : 'is-mock' ?>">
             <?= htmlspecialchars($skySourceLabel, ENT_QUOTES, 'UTF-8') ?>
@@ -222,19 +226,25 @@ $interpFor = static function ($body) use ($interpretations): string {
           </div>
         </div>
         <div class="moon-card-copy">
-          <p class="eyebrow">Fase lunar</p>
+          <p class="eyebrow"><?= htmlspecialchars($t('hoy.moon_phase'), ENT_QUOTES, 'UTF-8') ?></p>
           <h2><?= htmlspecialchars($phaseLabel, ENT_QUOTES, 'UTF-8') ?></h2>
           <p class="moon-blurb"><?= htmlspecialchars($phaseBlurb, ENT_QUOTES, 'UTF-8') ?></p>
           <p class="moon-quote"><span class="heart" aria-hidden="true">♥</span> <?= htmlspecialchars($phaseQuote, ENT_QUOTES, 'UTF-8') ?></p>
         </div>
       </article>
 
-      <div class="planet-grid planet-grid-primary" aria-label="Posiciones planetarias">
-        <?php foreach ($orderedPrimary as $body):
+      <div class="planet-grid planet-grid-primary" aria-label="<?= htmlspecialchars($t('hoy.planets'), ENT_QUOTES, 'UTF-8') ?>">
+        <?php
+        $primaryBodies = $orderedPrimary;
+        $secondaryBodies = [];
+        $sectionTitle = null;
+        // inline cards keep Hoy layout; meanings respect $lang
+        foreach ($orderedPrimary as $body):
           $bid = strtolower($body->id);
           $sid = strtolower($body->signId);
-          $nameEs = $bodyEs[$bid] ?? $body->name;
-          $signName = $signEs[$sid] ?? $body->sign;
+          $nameEs = \App\Support\PlanetMeanings::bodyName($bid, $lang);
+          $signName = \App\Support\PlanetMeanings::signName($sid, $lang);
+          $note = \App\Support\PlanetMeanings::forBody($body, $lang);
           ?>
           <article class="planet-card">
             <div class="planet-card-top">
@@ -247,19 +257,20 @@ $interpFor = static function ($body) use ($interpretations): string {
               <?php if ($body->retrograde): ?><span class="rx">Rx</span><?php endif; ?>
             </p>
             <p class="planet-degree"><?= htmlspecialchars($body->degreeFormatted(), ENT_QUOTES, 'UTF-8') ?></p>
-            <p class="planet-note"><?= htmlspecialchars($interpFor($body), ENT_QUOTES, 'UTF-8') ?></p>
+            <p class="planet-note"><?= htmlspecialchars($note, ENT_QUOTES, 'UTF-8') ?></p>
           </article>
         <?php endforeach; ?>
       </div>
     </div>
 
     <?php if ($secondary !== []): ?>
-      <div class="planet-grid planet-grid-outer" aria-label="Planetas exteriores">
+      <div class="planet-grid planet-grid-outer" aria-label="<?= htmlspecialchars($t('hoy.outers'), ENT_QUOTES, 'UTF-8') ?>">
         <?php foreach ($secondary as $body):
           $bid = strtolower($body->id);
           $sid = strtolower($body->signId);
-          $nameEs = $bodyEs[$bid] ?? $body->name;
-          $signName = $signEs[$sid] ?? $body->sign;
+          $nameEs = \App\Support\PlanetMeanings::bodyName($bid, $lang);
+          $signName = \App\Support\PlanetMeanings::signName($sid, $lang);
+          $note = \App\Support\PlanetMeanings::forBody($body, $lang);
           ?>
           <article class="planet-card is-outer">
             <div class="planet-card-top">
@@ -272,7 +283,7 @@ $interpFor = static function ($body) use ($interpretations): string {
               <?php if ($body->retrograde): ?><span class="rx">Rx</span><?php endif; ?>
             </p>
             <p class="planet-degree"><?= htmlspecialchars($body->degreeFormatted(), ENT_QUOTES, 'UTF-8') ?></p>
-            <p class="planet-note"><?= htmlspecialchars($interpFor($body), ENT_QUOTES, 'UTF-8') ?></p>
+            <p class="planet-note"><?= htmlspecialchars($note, ENT_QUOTES, 'UTF-8') ?></p>
           </article>
         <?php endforeach; ?>
       </div>

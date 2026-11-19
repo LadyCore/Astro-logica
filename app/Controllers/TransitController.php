@@ -24,9 +24,10 @@ final class TransitController extends Controller
         $error = null;
         $astro = new AstroService($this->config);
 
+        $locale = $this->lang();
         if ($submitted) {
             if (!$astro->hasApiKey()) {
-                $error = 'Todavía no está configurada la conexión al cielo en vivo.';
+                $error = $this->t('api.missing');
             } else {
                 try {
                     $payload = BirthForm::toBirthPayload($form);
@@ -34,19 +35,19 @@ final class TransitController extends Controller
                     $data = $astro->getTransitsData($payload, $when !== '' ? $when : null);
                     if (!empty($data['error'])) {
                         throw new \RuntimeException(
-                            is_string($data['message'] ?? null) ? (string) $data['message'] : 'No se pudieron calcular los tránsitos.'
+                            is_string($data['message'] ?? null) ? (string) $data['message'] : $this->t('api.chart_missing')
                         );
                     }
                     $planets = $data['transit_planets'] ?? [];
                     $split = PlanetMeanings::splitPrimarySecondary(
-                        PlanetMeanings::positionsFromApi(is_array($planets) ? $planets : [])
+                        PlanetMeanings::positionsFromApi(is_array($planets) ? $planets : [], $locale)
                     );
                     $primaryBodies = $split['primary'];
                     $secondaryBodies = $split['secondary'];
                     usleep(1_100_000);
                     $chartSvg = $astro->getTransitChartSvg($payload, $when !== '' ? $when : null, 'ivory-ink');
                     if ($chartSvg === null) {
-                        $error = 'Los datos llegaron, pero la rueda no. Probá de nuevo en unos segundos.';
+                        $error = $this->t('api.chart_missing');
                     }
                 } catch (\Throwable $e) {
                     $error = $e->getMessage();
@@ -55,7 +56,7 @@ final class TransitController extends Controller
         }
 
         $this->view('cartas/transitos', [
-            'title' => 'Tránsitos',
+            'title' => $this->t('transit.title'),
             'pageClass' => 'page-cartas page-transitos',
             'activeNav' => 'cartas',
             'activeCard' => 'transitos',

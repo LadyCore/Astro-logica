@@ -19,8 +19,9 @@ final class BirthForm
         $tz = (string) ($config['timezone'] ?? 'America/Argentina/Buenos_Aires');
         $nowYear = (int) (new \DateTimeImmutable('now', new \DateTimeZone($tz)))->format('Y');
 
+        $locale = I18n::detect();
         return [
-            'name' => 'Visitante',
+            'name' => $locale === 'en' ? 'Guest' : 'Visitante',
             'year' => 1990,
             'month' => 5,
             'day' => 15,

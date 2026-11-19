@@ -2,28 +2,32 @@
 /** @var list<\App\Models\PlanetPosition> $primaryBodies */
 /** @var list<\App\Models\PlanetPosition> $secondaryBodies */
 /** @var string|null $sectionTitle */
+/** @var string $lang */
+/** @var callable(string, array=): string $t */
 
 use App\Support\PlanetMeanings;
 
 $primaryBodies = $primaryBodies ?? [];
 $secondaryBodies = $secondaryBodies ?? [];
-$sectionTitle = $sectionTitle ?? 'Interpretación planetaria';
+$lang = $lang ?? 'es';
+$t = $t ?? static fn (string $key, array $replace = []): string => $key;
+$sectionTitle = $sectionTitle ?? $t('interp.default_title');
 
 if ($primaryBodies === [] && $secondaryBodies === []) {
     return;
 }
 
-$renderCard = static function (\App\Models\PlanetPosition $body): void {
+$renderCard = static function (\App\Models\PlanetPosition $body) use ($lang): void {
     $bid = strtolower($body->id);
     $sid = strtolower($body->signId);
-    $nameEs = PlanetMeanings::BODY_ES[$bid] ?? $body->name;
-    $signName = PlanetMeanings::SIGN_ES[$sid] ?? $body->sign;
-    $note = PlanetMeanings::forBody($body);
+    $name = PlanetMeanings::bodyName($bid, $lang);
+    $signName = PlanetMeanings::signName($sid, $lang);
+    $note = PlanetMeanings::forBody($body, $lang);
     ?>
     <article class="planet-card">
       <div class="planet-card-top">
         <span class="planet-glyph"><?= PlanetMeanings::BODY_GLYPH[$bid] ?? '·' ?></span>
-        <h3><?= htmlspecialchars($nameEs, ENT_QUOTES, 'UTF-8') ?></h3>
+        <h3><?= htmlspecialchars($name, ENT_QUOTES, 'UTF-8') ?></h3>
       </div>
       <p class="planet-sign">
         <span class="sign-glyph"><?= PlanetMeanings::SIGN_GLYPH[$sid] ?? '' ?></span>
@@ -39,17 +43,17 @@ $renderCard = static function (\App\Models\PlanetPosition $body): void {
 <section class="chart-interp" aria-label="<?= htmlspecialchars($sectionTitle, ENT_QUOTES, 'UTF-8') ?>">
   <header class="chart-interp-head">
     <h2><?= htmlspecialchars($sectionTitle, ENT_QUOTES, 'UTF-8') ?></h2>
-    <p>Los matices de cada planeta en su signo, en la misma clave que el Cielo del día.</p>
+    <p><?= htmlspecialchars($t('interp.lead'), ENT_QUOTES, 'UTF-8') ?></p>
   </header>
 
   <?php if ($primaryBodies !== []): ?>
-    <div class="planet-grid planet-grid-primary" aria-label="Planetas personales">
+    <div class="planet-grid planet-grid-primary" aria-label="<?= htmlspecialchars($t('interp.primary'), ENT_QUOTES, 'UTF-8') ?>">
       <?php foreach ($primaryBodies as $body) { $renderCard($body); } ?>
     </div>
   <?php endif; ?>
 
   <?php if ($secondaryBodies !== []): ?>
-    <div class="planet-grid planet-grid-outer" aria-label="Planetas exteriores">
+    <div class="planet-grid planet-grid-outer" aria-label="<?= htmlspecialchars($t('interp.secondary'), ENT_QUOTES, 'UTF-8') ?>">
       <?php foreach ($secondaryBodies as $body) { $renderCard($body); } ?>
     </div>
   <?php endif; ?>

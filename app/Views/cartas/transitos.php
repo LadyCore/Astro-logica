@@ -6,19 +6,21 @@
 /** @var list<\App\Models\PlanetPosition> $secondaryBodies */
 /** @var string|null $error */
 /** @var bool $apiReady */
+/** @var callable(string, array=): string $t */
+/** @var string $lang */
 $mode = 'transitos';
 $primaryBodies = $primaryBodies ?? [];
 $secondaryBodies = $secondaryBodies ?? [];
 ?>
 <section class="feature-page">
   <header class="feature-hero">
-    <p class="hoy-date">CIELO SOBRE TU NATAL</p>
-    <h1 class="hoy-title">Tránsitos</h1>
-    <p class="hoy-sub">El cielo de ahora sobre tu carta natal: aspectos activos y bi-rueda en vivo.</p>
+    <p class="hoy-date"><?= htmlspecialchars($t('transit.eyebrow'), ENT_QUOTES, 'UTF-8') ?></p>
+    <h1 class="hoy-title"><?= htmlspecialchars($t('transit.title'), ENT_QUOTES, 'UTF-8') ?></h1>
+    <p class="hoy-sub"><?= htmlspecialchars($t('transit.sub'), ENT_QUOTES, 'UTF-8') ?></p>
   </header>
 
   <?php if (!$apiReady): ?>
-    <p class="feature-banner is-warn">Todavía no está configurada la conexión al cielo en vivo.</p>
+    <p class="feature-banner is-warn"><?= htmlspecialchars($t('api.missing'), ENT_QUOTES, 'UTF-8') ?></p>
   <?php endif; ?>
   <?php if ($error): ?>
     <p class="feature-banner is-error"><?= htmlspecialchars($error, ENT_QUOTES, 'UTF-8') ?></p>
@@ -26,24 +28,24 @@ $secondaryBodies = $secondaryBodies ?? [];
 
   <div class="feature-layout<?= $chartSvg ? ' has-result' : '' ?>">
     <form class="astro-form" method="post" action="/transitos">
-      <h2>Natal + momento</h2>
+      <h2><?= htmlspecialchars($t('transit.form_title'), ENT_QUOTES, 'UTF-8') ?></h2>
       <?php require dirname(__DIR__) . '/partials/birth-fields.php'; ?>
-      <button type="submit" class="astro-submit">Calcular tránsitos</button>
+      <button type="submit" class="astro-submit"><?= htmlspecialchars($t('transit.submit'), ENT_QUOTES, 'UTF-8') ?></button>
     </form>
 
     <div class="feature-result">
       <?php if ($chartSvg): ?>
-        <div class="feature-chart ivory-panel" aria-label="Carta de tránsitos">
+        <div class="feature-chart ivory-panel" aria-label="<?= htmlspecialchars($t('transit.title'), ENT_QUOTES, 'UTF-8') ?>">
           <?= $chartSvg ?>
         </div>
       <?php else: ?>
-        <p class="feature-empty">Elegí el momento y el lugar actual para ver la bi-rueda de tránsitos.</p>
+        <p class="feature-empty"><?= htmlspecialchars($t('transit.empty'), ENT_QUOTES, 'UTF-8') ?></p>
       <?php endif; ?>
     </div>
   </div>
 
   <?php
-  $sectionTitle = 'Interpretación de los tránsitos';
+  $sectionTitle = $t('transit.interp_title');
   require dirname(__DIR__) . '/partials/planet-interpretations.php';
   ?>
 </section>

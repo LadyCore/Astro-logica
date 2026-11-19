@@ -24,9 +24,10 @@ final class SolarController extends Controller
         $error = null;
         $astro = new AstroService($this->config);
 
+        $locale = $this->lang();
         if ($submitted) {
             if (!$astro->hasApiKey()) {
-                $error = 'Todavía no está configurada la conexión al cielo en vivo.';
+                $error = $this->t('api.missing');
             } else {
                 try {
                     $payload = BirthForm::toBirthPayload($form);
@@ -34,19 +35,19 @@ final class SolarController extends Controller
                     $data = $astro->getSolarReturnData($payload, $year);
                     if (!empty($data['error'])) {
                         throw new \RuntimeException(
-                            is_string($data['message'] ?? null) ? (string) $data['message'] : 'No se pudo calcular la revolución solar.'
+                            is_string($data['message'] ?? null) ? (string) $data['message'] : $this->t('api.chart_missing')
                         );
                     }
                     $planets = $data['planets'] ?? [];
                     $split = PlanetMeanings::splitPrimarySecondary(
-                        PlanetMeanings::positionsFromApi(is_array($planets) ? $planets : [])
+                        PlanetMeanings::positionsFromApi(is_array($planets) ? $planets : [], $locale)
                     );
                     $primaryBodies = $split['primary'];
                     $secondaryBodies = $split['secondary'];
                     usleep(1_100_000);
                     $chartSvg = $astro->getSolarReturnChartSvg($payload, $year, 'ivory-ink');
                     if ($chartSvg === null) {
-                        $error = 'Los datos llegaron, pero la rueda no. Probá de nuevo en unos segundos.';
+                        $error = $this->t('api.chart_missing');
                     }
                 } catch (\Throwable $e) {
                     $error = $e->getMessage();
@@ -55,7 +56,7 @@ final class SolarController extends Controller
         }
 
         $this->view('cartas/revolucion-solar', [
-            'title' => 'Revolución Solar',
+            'title' => $this->t('solar.title'),
             'pageClass' => 'page-cartas page-revolucion-solar',
             'activeNav' => 'cartas',
             'activeCard' => 'revolucion-solar',

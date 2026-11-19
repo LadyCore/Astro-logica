@@ -24,23 +24,24 @@ final class NatalController extends Controller
         $error = null;
         $astro = new AstroService($this->config);
 
+        $locale = $this->lang();
         if ($submitted) {
             if (!$astro->hasApiKey()) {
-                $error = 'Todavía no está configurada la conexión al cielo en vivo.';
+                $error = $this->t('api.missing');
             } else {
                 try {
                     $payload = BirthForm::toBirthPayload($form);
                     $natal = $astro->getNatalChart($payload);
                     $planets = $natal->payload['planets'] ?? [];
                     $split = PlanetMeanings::splitPrimarySecondary(
-                        PlanetMeanings::positionsFromApi(is_array($planets) ? $planets : [])
+                        PlanetMeanings::positionsFromApi(is_array($planets) ? $planets : [], $locale)
                     );
                     $primaryBodies = $split['primary'];
                     $secondaryBodies = $split['secondary'];
                     usleep(1_100_000);
                     $chartSvg = $astro->getBirthChartSvg($payload, 'ivory-ink');
                     if ($chartSvg === null) {
-                        $error = 'Los datos llegaron, pero la rueda no. Probá de nuevo en unos segundos.';
+                        $error = $this->t('api.chart_missing');
                     }
                 } catch (\Throwable $e) {
                     $error = $e->getMessage();
@@ -49,7 +50,7 @@ final class NatalController extends Controller
         }
 
         $this->view('cartas/carta-astral', [
-            'title' => 'Carta Astral',
+            'title' => $this->t('carta.title'),
             'pageClass' => 'page-cartas page-carta-astral',
             'activeNav' => 'cartas',
             'activeCard' => 'carta-astral',

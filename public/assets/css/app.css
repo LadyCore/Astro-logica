@@ -626,7 +626,39 @@ body.page-hoy .site-header {
 .header-actions {
   display: flex;
   justify-content: flex-end;
-  gap: 0.5rem;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.lang-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.15rem;
+  padding: 0.18rem;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: color-mix(in srgb, var(--ink) 70%, transparent);
+}
+
+.lang-btn {
+  min-width: 2rem;
+  padding: 0.28rem 0.45rem;
+  border-radius: 999px;
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+  text-decoration: none;
+  text-align: center;
+}
+
+.lang-btn:hover {
+  color: var(--gold-bright);
+}
+
+.lang-btn.is-active {
+  color: var(--void);
+  background: var(--gold);
 }
 
 .icon-btn {

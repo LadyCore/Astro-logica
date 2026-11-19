@@ -26,9 +26,9 @@ final class HomeController extends Controller
         $usingLiveApi = $sky->source === 'api';
         $showDemoNoKeyBadge = $sky->source === 'mock';
         $skySourceLabel = match ($sky->source) {
-            'api' => 'Cielo en vivo',
-            'mock-fallback' => 'Datos demo · respaldo local',
-            default => 'Datos demo',
+            'api' => $this->t('hoy.live'),
+            'mock-fallback' => $this->t('hoy.demo_fallback'),
+            default => $this->t('hoy.demo'),
         };
 
         $this->view('home/index', [

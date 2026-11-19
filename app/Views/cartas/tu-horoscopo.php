@@ -4,17 +4,12 @@
 /** @var array<string, mixed>|null $horoscope */
 /** @var string|null $error */
 /** @var bool $apiReady */
+/** @var callable(string, array=): string $t */
+/** @var string $lang */
 
-$signs = [
-    'aries' => 'Aries', 'taurus' => 'Tauro', 'gemini' => 'Géminis', 'cancer' => 'Cáncer',
-    'leo' => 'Leo', 'virgo' => 'Virgo', 'libra' => 'Libra', 'scorpio' => 'Escorpio',
-    'sagittarius' => 'Sagitario', 'capricorn' => 'Capricornio', 'aquarius' => 'Acuario', 'pisces' => 'Piscis',
-];
-$glyphs = [
-    'aries' => '♈', 'taurus' => '♉', 'gemini' => '♊', 'cancer' => '♋',
-    'leo' => '♌', 'virgo' => '♍', 'libra' => '♎', 'scorpio' => '♏',
-    'sagittarius' => '♐', 'capricorn' => '♑', 'aquarius' => '♒', 'pisces' => '♓',
-];
+use App\Support\PlanetMeanings;
+
+$signIds = ['aries','taurus','gemini','cancer','leo','virgo','libra','scorpio','sagittarius','capricorn','aquarius','pisces'];
 $selected = strtolower((string) ($form['sign'] ?? 'scorpio'));
 $content = is_array($horoscope['content'] ?? null) ? $horoscope['content'] : [];
 $scores = is_array($horoscope['scores'] ?? null) ? $horoscope['scores'] : [];
@@ -34,53 +29,54 @@ $career = (string) ($content['career'] ?? '');
 $money = (string) ($content['money'] ?? '');
 $health = (string) ($content['health'] ?? '');
 $h = static fn (mixed $v): string => htmlspecialchars((string) $v, ENT_QUOTES, 'UTF-8');
+$lang = $lang ?? 'es';
 ?>
 <section class="feature-page">
   <header class="feature-hero">
-    <p class="hoy-date">HORÓSCOPO DIARIO</p>
-    <h1 class="hoy-title">Tu Horóscopo</h1>
-    <p class="hoy-sub">El pulso diario de tu signo: amor, trabajo, dinero y salud.</p>
+    <p class="hoy-date"><?= $h($t('horoscope.eyebrow')) ?></p>
+    <h1 class="hoy-title"><?= $h($t('horoscope.title')) ?></h1>
+    <p class="hoy-sub"><?= $h($t('horoscope.sub')) ?></p>
   </header>
 
   <?php if (!$apiReady): ?>
-    <p class="feature-banner is-warn">Todavía no está configurada la conexión al cielo en vivo.</p>
+    <p class="feature-banner is-warn"><?= $h($t('api.missing')) ?></p>
   <?php endif; ?>
   <?php if ($error): ?>
     <p class="feature-banner is-error"><?= $h($error) ?></p>
   <?php endif; ?>
 
   <form class="astro-form horoscope-form" method="post" action="/tu-horoscopo">
-    <h2>Elegí tu signo solar</h2>
-    <div class="sign-picker" role="listbox" aria-label="Signos del zodiaco">
-      <?php foreach ($signs as $id => $label): ?>
+    <h2><?= $h($t('horoscope.pick_sign')) ?></h2>
+    <div class="sign-picker" role="listbox" aria-label="<?= $h($t('horoscope.pick_sign')) ?>">
+      <?php foreach ($signIds as $id): ?>
         <label class="sign-chip<?= $selected === $id ? ' is-selected' : '' ?>">
           <input type="radio" name="sign" value="<?= $h($id) ?>" <?= $selected === $id ? 'checked' : '' ?>>
-          <span class="sign-chip-glyph" aria-hidden="true"><?= $glyphs[$id] ?? '·' ?></span>
-          <span class="sign-chip-label"><?= $h($label) ?></span>
+          <span class="sign-chip-glyph" aria-hidden="true"><?= PlanetMeanings::SIGN_GLYPH[$id] ?? '·' ?></span>
+          <span class="sign-chip-label"><?= $h(PlanetMeanings::signName($id, $lang)) ?></span>
         </label>
       <?php endforeach; ?>
     </div>
-    <button type="submit" class="astro-submit">Ver horóscopo de hoy</button>
+    <button type="submit" class="astro-submit"><?= $h($t('horoscope.submit')) ?></button>
   </form>
 
   <?php if (is_array($horoscope)): ?>
     <div class="horoscope-result">
       <div class="horoscope-head">
         <p class="hoy-date"><?= $h(strtoupper((string) ($horoscope['date'] ?? 'HOY'))) ?></p>
-        <h2><?= $h($signs[$selected] ?? $selected) ?> <?= $glyphs[$selected] ?? '' ?></h2>
+        <h2><?= $h(PlanetMeanings::signName($selected, $lang)) ?> <?= PlanetMeanings::SIGN_GLYPH[$selected] ?? '' ?></h2>
         <?php if ($theme !== ''): ?>
-          <p class="hoy-sub">Tema del día: <?= $h($theme) ?></p>
+          <p class="hoy-sub"><?= $h($t('horoscope.theme', ['theme' => $theme])) ?></p>
         <?php endif; ?>
       </div>
 
       <?php if ($scores !== []): ?>
-        <div class="score-grid" aria-label="Puntajes del día">
-          <?php foreach (['overall' => 'General', 'love' => 'Amor', 'career' => 'Carrera', 'money' => 'Dinero', 'health' => 'Salud'] as $key => $label):
+        <div class="score-grid" aria-label="scores">
+          <?php foreach (['overall', 'love', 'career', 'money', 'health'] as $key):
             if (!isset($scores[$key])) continue;
             $val = (int) $scores[$key];
             ?>
             <article class="score-card">
-              <p class="score-label"><?= $h($label) ?></p>
+              <p class="score-label"><?= $h($t('horoscope.score.' . $key)) ?></p>
               <p class="score-value"><?= $val ?></p>
               <div class="score-bar" aria-hidden="true"><span style="width: <?= max(0, min(100, $val)) ?>%"></span></div>
             </article>
@@ -90,15 +86,13 @@ $h = static fn (mixed $v): string => htmlspecialchars((string) $v, ENT_QUOTES, '
 
       <?php if ($overview !== ''): ?>
         <article class="horoscope-block">
-          <h3>Panorama</h3>
+          <h3><?= $h($t('horoscope.overview')) ?></h3>
           <p><?= nl2br($h($overview)) ?></p>
         </article>
       <?php endif; ?>
 
       <?php if ($keywords !== []): ?>
-        <p class="lucky-line">
-          <?= $h(implode(' · ', array_map('strval', $keywords))) ?>
-        </p>
+        <p class="lucky-line"><?= $h(implode(' · ', array_map('strval', $keywords))) ?></p>
       <?php endif; ?>
 
       <?php if ($insights !== []): ?>
@@ -107,7 +101,7 @@ $h = static fn (mixed $v): string => htmlspecialchars((string) $v, ENT_QUOTES, '
             if (!is_string($insight) || $insight === '') continue;
             ?>
             <article class="horoscope-block">
-              <h3>Insight</h3>
+              <h3><?= $h($t('horoscope.insight')) ?></h3>
               <p><?= nl2br($h($insight)) ?></p>
             </article>
           <?php endforeach; ?>
@@ -116,10 +110,10 @@ $h = static fn (mixed $v): string => htmlspecialchars((string) $v, ENT_QUOTES, '
 
       <div class="horoscope-columns">
         <?php foreach ([
-            'Amor' => $love,
-            'Carrera' => $career,
-            'Dinero' => $money,
-            'Salud' => $health,
+            $t('horoscope.score.love') => $love,
+            $t('horoscope.score.career') => $career,
+            $t('horoscope.score.money') => $money,
+            $t('horoscope.score.health') => $health,
         ] as $title => $text):
           if ($text === '') continue;
           ?>
@@ -134,9 +128,9 @@ $h = static fn (mixed $v): string => htmlspecialchars((string) $v, ENT_QUOTES, '
         <p class="lucky-line">
           <?php
           $bits = [];
-          foreach (['number' => 'Número', 'color' => 'Color', 'time' => 'Hora'] as $k => $lab) {
+          foreach (['number' => 'horoscope.lucky.number', 'color' => 'horoscope.lucky.color', 'time' => 'horoscope.lucky.time'] as $k => $labKey) {
               if (!empty($lucky[$k])) {
-                  $bits[] = $lab . ': ' . (is_array($lucky[$k]) ? implode(', ', $lucky[$k]) : (string) $lucky[$k]);
+                  $bits[] = $t($labKey) . ': ' . (is_array($lucky[$k]) ? implode(', ', $lucky[$k]) : (string) $lucky[$k]);
               }
           }
           echo $h(implode(' · ', $bits));
