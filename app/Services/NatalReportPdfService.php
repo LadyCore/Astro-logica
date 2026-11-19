@@ -12,13 +12,12 @@ use setasign\Fpdi\Tcpdf\Fpdi;
 /**
  * Builds a natal-chart PDF by stamping dynamic data onto a Canva PDF template (FPDI + TCPDF).
  *
- * Template path (default): storage/templates/reporte-cn.pdf
- * Drop your Canva export "REPORTE CN .pdf" there (renamed) and adjust coordinates in config/natal_report.php.
+ * Page order:
+ *   1. Portada — datos del consultante (dibujados encima del diseño Canva)
+ *   2. Gráfico de la carta natal (SVG)
+ *   3+. Interpretación (posiciones + textos cortos)
  *
- * Expected Canva structure (REPORTE CN):
- *   1 — cover (name / birth / place stamped under the author block)
- *   2 — intro (“Tu Carta Natal”) kept as-is
- *   3–4 — blank ornamental frames for planet rows (cycled if needed)
+ * Template: storage/templates/reporte-cn.pdf — tune coords in config/natal_report.php.
  */
 final class NatalReportPdfService
 {
@@ -26,6 +25,9 @@ final class NatalReportPdfService
     private array $layout;
 
     private string $templatePath;
+
+    /** @var list<string> */
+    private array $tempFiles = [];
 
     /**
      * @param array<string, mixed> $config Full app config (or at least natal_report + timezone).
@@ -55,9 +57,10 @@ final class NatalReportPdfService
     /**
      * @param array<string, mixed> $birth Normalized birth payload (name, year, month, day, …).
      * @param list<PlanetPosition> $bodies Ordered planet positions for the report.
+     * @param string|null $chartSvg Natal wheel SVG markup (Ivory Ink), optional.
      * @return string Raw PDF binary
      */
-    public function generate(array $birth, array $bodies, string $locale = 'es'): string
+    public function generate(array $birth, array $bodies, string $locale = 'es', ?string $chartSvg = null): string
     {
         if (!$this->templateExists()) {
             throw new RuntimeException(
@@ -81,22 +84,21 @@ final class NatalReportPdfService
             throw new RuntimeException('La plantilla PDF no tiene páginas legibles.');
         }
 
-        // --- Page 1: cover / identity ---
-        $this->addTemplatePage($pdf, 1);
-        $this->stampCover($pdf, $birth, $locale);
+        try {
+            // 1) Datos del usuario — portada Canva, texto encima de todo.
+            $this->addTemplatePage($pdf, 1);
+            $this->stampCover($pdf, $birth, $locale);
 
-        // --- Optional passthrough pages (intro copy from Canva) ---
-        $passthrough = $this->intList($this->layout['passthrough_pages'] ?? [2]);
-        foreach ($passthrough as $pageNo) {
-            if ($pageNo >= 1 && $pageNo <= $pageCount && $pageNo !== 1) {
-                $this->addTemplatePage($pdf, $pageNo);
-            }
+            // 2) Gráfico de la carta natal.
+            $this->stampChart($pdf, $chartSvg, $locale, $pageCount);
+
+            // 3) Interpretación — posiciones planetarias.
+            $this->stampPlanets($pdf, $bodies, $locale, $pageCount);
+
+            return $pdf->Output('', 'S');
+        } finally {
+            $this->cleanupTempFiles();
         }
-
-        // --- Content frames: planet positions + short interpretations ---
-        $this->stampPlanets($pdf, $bodies, $locale, $pageCount);
-
-        return $pdf->Output('', 'S');
     }
 
     /**
@@ -105,9 +107,9 @@ final class NatalReportPdfService
      * @param array<string, mixed> $birth
      * @param list<PlanetPosition> $bodies
      */
-    public function download(array $birth, array $bodies, string $locale = 'es'): void
+    public function download(array $birth, array $bodies, string $locale = 'es', ?string $chartSvg = null): void
     {
-        $binary = $this->generate($birth, $bodies, $locale);
+        $binary = $this->generate($birth, $bodies, $locale, $chartSvg);
         $slug = preg_replace('/[^a-zA-Z0-9_-]+/', '-', (string) ($birth['name'] ?? 'carta')) ?: 'carta';
         $filename = 'carta-natal-' . strtolower($slug) . '.pdf';
 
@@ -132,9 +134,92 @@ final class NatalReportPdfService
             $place = $locale === 'en' ? 'Location not set' : 'Lugar no indicado';
         }
 
+        // Drawn after useTemplate → sits on top of Canva artwork.
         $this->writeField($pdf, $cover['name'] ?? [], $name);
         $this->writeField($pdf, $cover['birth_date'] ?? [], $date);
         $this->writeField($pdf, $cover['place'] ?? [], $place);
+    }
+
+    private function stampChart(Fpdi $pdf, ?string $chartSvg, string $locale, int $templatePages): void
+    {
+        $cfg = is_array($this->layout['chart'] ?? null) ? $this->layout['chart'] : [];
+        $frames = $this->contentFrames($templatePages);
+        $this->addTemplatePage($pdf, $frames[0]);
+
+        $headings = is_array($cfg['heading'] ?? null) ? $cfg['heading'] : [];
+        $headingText = (string) ($headings[$locale] ?? ($locale === 'en' ? 'Your Natal Chart' : 'Tu Carta Natal'));
+        $x = (float) ($cfg['svg_x'] ?? 28);
+        $w = (float) ($cfg['svg_w'] ?? 230);
+        $headingY = (float) ($cfg['heading_y'] ?? 28);
+        $headingSize = (float) ($cfg['heading_size'] ?? 20);
+        $headingColor = $this->rgb($cfg['heading_color'] ?? [28, 24, 68]);
+        $this->stampSectionHeading($pdf, $headingText, $x, $w, $headingY, $headingSize, $headingColor);
+
+        $svg = is_string($chartSvg) ? trim($chartSvg) : '';
+        $y = (float) ($cfg['svg_y'] ?? 52);
+        $h = (float) ($cfg['svg_h'] ?? 230);
+
+        if ($svg === '' || !str_contains($svg, '<svg')) {
+            $this->stampChartMissing($pdf, $cfg, $locale, $x, $y, $w);
+            return;
+        }
+
+        // Prefer PNG rasterization (cleaner than TCPDF's SVG parser on FreeAstroAPI wheels).
+        $png = $this->rasterizeSvgToPng($svg);
+        if ($png !== null) {
+            $pdf->Image($png, $x, $y, $w, $h, 'PNG', '', '', false, 300, '', false, false, 0, false, false, true);
+            return;
+        }
+
+        if (function_exists('xml_parser_create')) {
+            $path = $this->writeTempSvg($svg);
+            $pdf->ImageSVG($path, $x, $y, $w, $h, '', '', '', 0, true);
+            return;
+        }
+
+        $this->stampChartMissing($pdf, $cfg, $locale, $x, $y, $w);
+    }
+
+    /**
+     * @param array<string, mixed> $cfg
+     */
+    private function stampChartMissing(Fpdi $pdf, array $cfg, string $locale, float $x, float $y, float $w): void
+    {
+        $missing = is_array($cfg['missing'] ?? null) ? $cfg['missing'] : [];
+        $msg = (string) ($missing[$locale] ?? ($locale === 'en'
+            ? 'The natal chart graphic could not be included in this report.'
+            : 'No se pudo incluir el gráfico de la carta en este reporte.'));
+        $pdf->SetTextColor(90, 78, 64);
+        $pdf->SetFont('dejavusans', '', 12);
+        $pdf->SetXY($x, $y + 40);
+        $pdf->MultiCell($w, 6, $msg, 0, 'C');
+    }
+
+    /**
+     * Rasterize SVG → PNG via PyMuPDF when available (best fidelity for natal wheels).
+     */
+    private function rasterizeSvgToPng(string $svg): ?string
+    {
+        $svgPath = $this->writeTempSvg($svg);
+        $pngPath = preg_replace('/\.svg$/i', '.png', $svgPath) ?: ($svgPath . '.png');
+        $script = <<<'PY'
+import sys
+try:
+    import pymupdf
+except ImportError:
+    sys.exit(2)
+doc = pymupdf.open(sys.argv[1])
+page = doc[0]
+pix = page.get_pixmap(matrix=pymupdf.Matrix(2, 2), alpha=False)
+pix.save(sys.argv[2])
+PY;
+        $cmd = 'python3 -c ' . escapeshellarg($script) . ' ' . escapeshellarg($svgPath) . ' ' . escapeshellarg($pngPath) . ' 2>/dev/null';
+        exec($cmd, $out, $code);
+        if ($code !== 0 || !is_readable($pngPath)) {
+            return null;
+        }
+        $this->tempFiles[] = $pngPath;
+        return $pngPath;
     }
 
     /**
@@ -147,27 +232,32 @@ final class NatalReportPdfService
         }
 
         $cfg = is_array($this->layout['planets'] ?? null) ? $this->layout['planets'] : [];
-        $startY = (float) ($cfg['start_y'] ?? 48);
-        $lineH = (float) ($cfg['line_height'] ?? 26);
+        $startY = (float) ($cfg['start_y'] ?? 54);
+        $lineH = (float) ($cfg['line_height'] ?? 28);
         $x = (float) ($cfg['left_x'] ?? 36);
         $w = (float) ($cfg['width'] ?? 214);
-        $max = max(1, (int) ($cfg['max_lines_per_page'] ?? 10));
-        $titleSize = (float) ($cfg['title_size'] ?? 11);
-        $bodySize = (float) ($cfg['body_size'] ?? 10);
-        $noteSize = (float) ($cfg['note_size'] ?? 9);
-        $titleColor = $this->rgb($cfg['title_color'] ?? [35, 32, 72]);
-        $metaColor = $this->rgb($cfg['meta_color'] ?? [120, 72, 55]);
-        $noteColor = $this->rgb($cfg['note_color'] ?? [55, 50, 70]);
-        $headingY = (float) ($cfg['heading_y'] ?? 28);
-        $headingSize = (float) ($cfg['heading_size'] ?? 16);
-        $headingColor = $this->rgb($cfg['heading_color'] ?? [35, 32, 72]);
+        $max = max(1, (int) ($cfg['max_lines_per_page'] ?? 9));
+        $titleSize = (float) ($cfg['title_size'] ?? 13);
+        $bodySize = (float) ($cfg['body_size'] ?? 12);
+        $noteSize = (float) ($cfg['note_size'] ?? 11);
+        $titleColor = $this->rgb($cfg['title_color'] ?? [28, 24, 68]);
+        $metaColor = $this->rgb($cfg['meta_color'] ?? [130, 72, 48]);
+        $noteColor = $this->rgb($cfg['note_color'] ?? [48, 44, 62]);
+        $headingY = (float) ($cfg['heading_y'] ?? 26);
+        $headingSize = (float) ($cfg['heading_size'] ?? 20);
+        $subY = (float) ($cfg['subheading_y'] ?? 40);
+        $subSize = (float) ($cfg['subheading_size'] ?? 13);
+        $headingColor = $this->rgb($cfg['heading_color'] ?? [28, 24, 68]);
         $headings = is_array($cfg['heading'] ?? null) ? $cfg['heading'] : [];
-        $headingText = (string) ($headings[$locale] ?? ($locale === 'en' ? 'Planetary positions' : 'Posiciones planetarias'));
+        $subheadings = is_array($cfg['subheading'] ?? null) ? $cfg['subheading'] : [];
+        $headingText = (string) ($headings[$locale] ?? ($locale === 'en' ? 'Interpretation' : 'Interpretación'));
+        $subText = (string) ($subheadings[$locale] ?? ($locale === 'en' ? 'Planetary positions' : 'Posiciones planetarias'));
 
         $frames = $this->contentFrames($templatePages);
         $frameIdx = 0;
         $this->addTemplatePage($pdf, $frames[$frameIdx]);
         $this->stampSectionHeading($pdf, $headingText, $x, $w, $headingY, $headingSize, $headingColor);
+        $this->stampSectionHeading($pdf, $subText, $x, $w, $subY, $subSize, $metaColor);
 
         $y = $startY;
         $linesOnPage = 0;
@@ -177,6 +267,7 @@ final class NatalReportPdfService
                 $frameIdx = ($frameIdx + 1) % count($frames);
                 $this->addTemplatePage($pdf, $frames[$frameIdx]);
                 $this->stampSectionHeading($pdf, $headingText, $x, $w, $headingY, $headingSize, $headingColor);
+                $this->stampSectionHeading($pdf, $subText, $x, $w, $subY, $subSize, $metaColor);
                 $y = $startY;
                 $linesOnPage = 0;
             }
@@ -190,30 +281,27 @@ final class NatalReportPdfService
             $rx = $body->retrograde ? ' Rx' : '';
             $note = PlanetMeanings::forBody($body, $locale);
 
-            // Planet title line
             $pdf->SetTextColor(...$titleColor);
             $pdf->SetFont('dejavusans', 'B', $titleSize);
             $pdf->SetXY($x, $y);
-            $pdf->Cell($w, 5, sprintf('%s  %s', $glyph, $name), 0, 0, 'L', false, '', 0, false, 'T', 'M');
+            $pdf->Cell($w, 5.5, sprintf('%s  %s', $glyph, $name), 0, 0, 'L', false, '', 0, false, 'T', 'M');
 
-            // Sign + degree
             $pdf->SetTextColor(...$metaColor);
             $pdf->SetFont('dejavusans', '', $bodySize);
-            $pdf->SetXY($x, $y + 5.5);
+            $pdf->SetXY($x, $y + 6.2);
             $pdf->Cell(
                 $w,
-                4.5,
+                5,
                 trim(sprintf('%s %s  %s%s', $signGlyph, $sign, $degree, $rx)),
                 0,
                 0,
                 'L'
             );
 
-            // Short interpretation
             $pdf->SetTextColor(...$noteColor);
             $pdf->SetFont('dejavusans', '', $noteSize);
-            $pdf->SetXY($x, $y + 11);
-            $pdf->MultiCell($w, 4.0, $note, 0, 'L', false, 1);
+            $pdf->SetXY($x, $y + 12.2);
+            $pdf->MultiCell($w, 4.4, $note, 0, 'L', false, 1);
 
             $y += $lineH;
             $linesOnPage++;
@@ -221,8 +309,6 @@ final class NatalReportPdfService
     }
 
     /**
-     * Template page numbers used as blank content frames (fallback: last page, then 1).
-     *
      * @return list<int>
      */
     private function contentFrames(int $templatePages): array
@@ -304,7 +390,35 @@ final class NatalReportPdfService
         $pdf->SetTextColor(...$color);
         $pdf->SetFont('dejavusans', $style, $size);
         $pdf->SetXY($x, $y);
-        $pdf->Cell($w, $size * 0.45, $text, 0, 0, $align, false, '', 0, false, 'T', 'M');
+        $pdf->Cell($w, $size * 0.5, $text, 0, 0, $align, false, '', 0, false, 'T', 'M');
+    }
+
+    private function writeTempSvg(string $svg): string
+    {
+        $dir = dirname(__DIR__, 2) . '/storage/cache';
+        if (!is_dir($dir)) {
+            mkdir($dir, 0775, true);
+        }
+        $path = $dir . '/natal-pdf-' . bin2hex(random_bytes(8)) . '.svg';
+        // Ensure XML declaration for TCPDF's SVG parser.
+        if (!str_starts_with($svg, '<?xml')) {
+            $svg = '<?xml version="1.0" encoding="UTF-8"?>' . "\n" . $svg;
+        }
+        if (file_put_contents($path, $svg) === false) {
+            throw new RuntimeException('No se pudo preparar el SVG de la carta para el PDF.');
+        }
+        $this->tempFiles[] = $path;
+        return $path;
+    }
+
+    private function cleanupTempFiles(): void
+    {
+        foreach ($this->tempFiles as $path) {
+            if (is_file($path)) {
+                @unlink($path);
+            }
+        }
+        $this->tempFiles = [];
     }
 
     /**

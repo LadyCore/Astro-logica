@@ -103,7 +103,10 @@ final class NatalController extends Controller
             if ($ordered === []) {
                 throw new \RuntimeException($this->t('api.chart_missing'));
             }
-            $report->download($payload, $ordered, $locale);
+            // Respect FreeAstroAPI soft rate-limit between natal JSON and SVG.
+            usleep(1_100_000);
+            $chartSvg = $astro->getBirthChartSvg($payload, 'ivory-ink');
+            $report->download($payload, $ordered, $locale, $chartSvg);
             exit;
         } catch (\Throwable $e) {
             $this->pdfError($e->getMessage(), $form);
