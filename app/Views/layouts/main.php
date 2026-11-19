@@ -98,11 +98,11 @@ $langSwitchUrl = static function (string $code) use ($lang): string {
         <div class="nav-dropdown-menu" id="cartas-menu" role="menu" hidden>
           <a href="/carta-astral" class="nav-dropdown-item<?= ($activeCard ?? '') === 'carta-astral' ? ' is-active' : '' ?>" role="menuitem"><?= htmlspecialchars($t('nav.carta_astral'), ENT_QUOTES, 'UTF-8') ?></a>
           <a href="/revolucion-solar" class="nav-dropdown-item<?= ($activeCard ?? '') === 'revolucion-solar' ? ' is-active' : '' ?>" role="menuitem"><?= htmlspecialchars($t('nav.revolucion_solar'), ENT_QUOTES, 'UTF-8') ?></a>
-          <a href="/transitos" class="nav-dropdown-item<?= ($activeCard ?? '') === 'transitos' ? ' is-active' : '' ?>" role="menuitem"><?= htmlspecialchars($t('nav.transitos'), ENT_QUOTES, 'UTF-8') ?></a>
         </div>
       </div>
 
-      <a href="/tu-horoscopo" class="nav-link<?= $activeNav === 'horoscopo' ? ' is-active' : '' ?>"><?= htmlspecialchars($t('nav.horoscopo'), ENT_QUOTES, 'UTF-8') ?></a>
+      <a href="/transitos" class="nav-link<?= $activeNav === 'transitos' ? ' is-active' : '' ?>"><?= htmlspecialchars($t('nav.transitos'), ENT_QUOTES, 'UTF-8') ?></a>
+      <a href="/tu-horoscopo" class="nav-link<?= $activeNav === 'horoscopo' ? ' is-active' : '' ?>"><?= htmlspecialchars($t('nav.diario'), ENT_QUOTES, 'UTF-8') ?></a>
     </nav>
 
     <div class="header-actions">
@@ -122,6 +122,19 @@ $langSwitchUrl = static function (string $code) use ($lang): string {
           lang="en"
         ><?= htmlspecialchars($t('lang.en'), ENT_QUOTES, 'UTF-8') ?></a>
       </div>
+      <button type="button" class="icon-btn" id="site-search-btn" aria-label="<?= htmlspecialchars($t('nav.search'), ENT_QUOTES, 'UTF-8') ?>">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" aria-hidden="true">
+          <circle cx="11" cy="11" r="6.5" stroke="currentColor" stroke-width="1.5"/>
+          <path d="M16.2 16.2 20 20" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+      </button>
+      <a href="/carta-astral" class="icon-btn" aria-label="<?= htmlspecialchars($t('nav.profile'), ENT_QUOTES, 'UTF-8') ?>">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" aria-hidden="true">
+          <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.4"/>
+          <circle cx="12" cy="10" r="3.2" stroke="currentColor" stroke-width="1.4"/>
+          <path d="M6.8 18.2c1.4-2.2 3.2-3.2 5.2-3.2s3.8 1 5.2 3.2" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+        </svg>
+      </a>
       <button type="button" class="icon-btn theme-toggle" id="theme-toggle" aria-label="<?= htmlspecialchars($t('theme.toggle'), ENT_QUOTES, 'UTF-8') ?>">
         <span class="theme-icon" aria-hidden="true"></span>
       </button>

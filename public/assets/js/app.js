@@ -18,6 +18,17 @@
     });
   }
 
+  const searchBtn = document.getElementById("site-search-btn");
+  if (searchBtn) {
+    searchBtn.addEventListener("click", () => {
+      const target = document.getElementById("home-planets-title")
+        || document.getElementById("main");
+      if (target && typeof target.scrollIntoView === "function") {
+        target.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+    });
+  }
+
   // Language preference (cookie + localStorage); server renders via ?lang=
   document.querySelectorAll(".lang-btn[data-lang]").forEach((btn) => {
     btn.addEventListener("click", () => {
