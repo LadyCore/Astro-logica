@@ -215,7 +215,7 @@ $interpFor = static function ($body) use ($interpretations): string {
   <section class="home-features" aria-label="Cartas y ciclos">
     <article class="home-feature-card">
       <div class="home-feature-art natal-wheel" aria-hidden="true">
-        <svg viewBox="0 0 200 200" width="160" height="160" fill="none">
+        <svg viewBox="0 0 200 200" width="112" height="112" fill="none" aria-hidden="true">
           <circle cx="100" cy="100" r="88" stroke="currentColor" stroke-width="1.2" opacity=".55"/>
           <circle cx="100" cy="100" r="62" stroke="currentColor" stroke-width="1" opacity=".4"/>
           <circle cx="100" cy="100" r="28" stroke="currentColor" stroke-width="1" opacity=".7"/>
