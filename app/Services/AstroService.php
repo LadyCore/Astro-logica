@@ -168,10 +168,200 @@ final class AstroService
     }
 
     /**
+     * SVG wheel for the current sky (uses natal/chart with "now" as the moment).
+     * Default visual: FreeAstroAPI editorial preset "Ivory Ink" (light paper + ink).
+     * Returns null when there is no API key or the request fails (caller keeps fallback art).
+     *
+     * @param string $themePreset ivory-ink|dark (ivory-ink is the Hoy default)
+     */
+    public function getDailySkyChartSvg(?\DateTimeImmutable $moment = null, string $themePreset = 'ivory-ink'): ?string
+    {
+        if (!$this->hasApiKey()) {
+            return null;
+        }
+
+        $tz = new \DateTimeZone((string) ($this->config['timezone'] ?? 'UTC'));
+        $moment ??= new \DateTimeImmutable('now', $tz);
+        $preset = strtolower($themePreset);
+        if ($preset === 'light' || $preset === 'ivory' || $preset === 'ivory_ink') {
+            $preset = 'ivory-ink';
+        }
+        if ($preset !== 'dark' && $preset !== 'ivory-ink') {
+            $preset = 'ivory-ink';
+        }
+
+        $cacheSeconds = (int) ($this->config['astro_api']['chart_cache_seconds'] ?? 900);
+        $bucket = (int) floor(((int) $moment->format('i')) / 15) * 15;
+        $cacheKey = sprintf(
+            'sky-chart-%s-%s-%02d.svg',
+            $preset,
+            $moment->format('YmdH'),
+            $bucket
+        );
+        $cached = $this->readChartCache($cacheKey);
+        if ($cached !== null) {
+            return $cached;
+        }
+
+        $api = $this->config['astro_api'] ?? [];
+        $path = (string) ($api['chart_svg_path'] ?? '/api/v1/natal/chart/');
+        $themeType = $preset === 'dark' ? 'dark' : 'light';
+        $chartConfig = $preset === 'dark'
+            ? [
+                'chart_background' => '#010c1d',
+                'aspect_circle_background' => '#06101c',
+                'custom_planet_color' => '#e4c48a',
+                'custom_sign_color' => '#c9a46a',
+                'custom_house_color' => '#9aa8bb',
+                'custom_sign_bg_color' => '#0a1422',
+                'custom_house_bg_color' => '#06101c',
+                'planet_color_mode' => 'sign',
+                'show_retrograde_markers' => true,
+                'retrograde_marker_style' => 'rx',
+                'show_aspect_symbols' => false,
+                'planet_symbol_scale' => 0.38,
+                'sign_symbol_scale' => 0.55,
+            ]
+            // FreeAstroAPI editorial preset: Ivory Ink
+            : [
+                'chart_background' => '#F6F1E8',
+                'aspect_circle_background' => '#FAF6EE',
+                'custom_planet_color' => '#1E1B18',
+                'custom_sign_color' => '#6A5B48',
+                'custom_house_color' => '#3E362C',
+                'custom_sign_bg_color' => '#EFE4D3',
+                'custom_house_bg_color' => '#FAF6EE',
+                'sign_line_color' => '#3A3128',
+                'house_line_color' => '#8C7C68',
+                'aspect_conjunction_color' => '#2F2A24',
+                'aspect_opposition_color' => '#A1362A',
+                'aspect_trine_color' => '#1F4E79',
+                'aspect_square_color' => '#8F2B23',
+                'aspect_sextile_color' => '#355E8D',
+                'aspect_quincunx_color' => '#4D6A3A',
+                'show_retrograde_markers' => true,
+                'retrograde_marker_style' => 'rx',
+                'show_aspect_symbols' => false,
+                'planet_symbol_scale' => 0.38,
+                'sign_symbol_scale' => 0.55,
+            ];
+
+        $payload = [
+            'name' => 'Cielo del día',
+            'year' => (int) $moment->format('Y'),
+            'month' => (int) $moment->format('n'),
+            'day' => (int) $moment->format('j'),
+            'hour' => (int) $moment->format('G'),
+            'minute' => (int) $moment->format('i'),
+            'time_known' => true,
+            'city' => (string) ($api['sky_city'] ?? 'Buenos Aires'),
+            'lat' => (float) ($api['sky_lat'] ?? -34.6037),
+            'lng' => (float) ($api['sky_lng'] ?? -58.3816),
+            'tz_str' => (string) ($this->config['timezone'] ?? 'America/Argentina/Buenos_Aires'),
+            'house_system' => 'placidus',
+            'zodiac_type' => 'tropical',
+            'format' => 'svg',
+            'size' => 720,
+            'theme_type' => $themeType,
+            'show_metadata' => false,
+            'display_settings' => [
+                'sun' => true,
+                'moon' => true,
+                'mercury' => true,
+                'venus' => true,
+                'mars' => true,
+                'jupiter' => true,
+                'saturn' => true,
+                'uranus' => true,
+                'neptune' => true,
+                'pluto' => true,
+                'chiron' => false,
+                'north_node' => true,
+                'lilith' => false,
+            ],
+            'chart_config' => $chartConfig,
+        ];
+
+        try {
+            $svg = $this->requestSvg($path, $payload);
+        } catch (\Throwable $e) {
+            if (!empty($this->config['debug'])) {
+                error_log('[AstroService] sky chart SVG failed: ' . $e->getMessage());
+            }
+            return null;
+        }
+
+        if ($svg === null || $svg === '') {
+            return null;
+        }
+
+        $this->writeChartCache($cacheKey, $svg, $cacheSeconds);
+        return $svg;
+    }
+
+    /**
      * @param array<string, mixed> $payload
      * @return array<string, mixed>
      */
     private function request(string $endpoint, array $payload): array
+    {
+        $result = $this->curlPost($endpoint, $payload, 'application/json');
+        if ($result['http_code'] !== 200 || $result['body'] === '') {
+            return [
+                'error' => true,
+                'message' => $result['error'] !== '' ? $result['error'] : 'Error al consultar la API',
+                'http_code' => $result['http_code'],
+            ];
+        }
+
+        $data = json_decode($result['body'], true);
+
+        return is_array($data)
+            ? $data
+            : ['error' => true, 'message' => 'Respuesta inválida', 'http_code' => $result['http_code']];
+    }
+
+    /**
+     * @param array<string, mixed> $payload
+     */
+    private function requestSvg(string $endpoint, array $payload): string
+    {
+        $result = $this->curlPost($endpoint, $payload, 'image/svg+xml, application/json');
+        if ($result['http_code'] !== 200 || $result['body'] === '') {
+            throw new RuntimeException(
+                ($result['error'] !== '' ? $result['error'] : 'Chart SVG request failed')
+                . ' (HTTP ' . $result['http_code'] . ')'
+            );
+        }
+
+        $body = $result['body'];
+        if (str_contains($body, '<svg')) {
+            // Strip XML declaration / scripts if present; keep the SVG fragment.
+            if (preg_match('/<svg\b.*<\/svg>/is', $body, $m)) {
+                return $m[0];
+            }
+            return $body;
+        }
+
+        $decoded = json_decode($body, true);
+        if (is_array($decoded)) {
+            foreach (['svg', 'data', 'chart'] as $key) {
+                if (isset($decoded[$key]) && is_string($decoded[$key]) && str_contains($decoded[$key], '<svg')) {
+                    return $decoded[$key];
+                }
+            }
+            $msg = $decoded['message'] ?? $decoded['error'] ?? 'Unexpected chart response';
+            throw new RuntimeException(is_string($msg) ? $msg : 'Unexpected chart response');
+        }
+
+        throw new RuntimeException('Chart endpoint did not return SVG.');
+    }
+
+    /**
+     * @param array<string, mixed> $payload
+     * @return array{http_code:int,body:string,error:string}
+     */
+    private function curlPost(string $endpoint, array $payload, string $accept): array
     {
         $url = str_starts_with($endpoint, 'http')
             ? $endpoint
@@ -179,22 +369,16 @@ final class AstroService
 
         $ch = curl_init($url);
         if ($ch === false) {
-            return [
-                'error' => true,
-                'message' => 'No se pudo iniciar cURL',
-                'http_code' => 0,
-            ];
+            return ['http_code' => 0, 'body' => '', 'error' => 'No se pudo iniciar cURL'];
         }
 
-        $timeout = (int) ($this->config['astro_api']['timeout'] ?? 15);
-
+        $timeout = (int) ($this->config['astro_api']['timeout'] ?? 20);
         curl_setopt_array($ch, [
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_POST => true,
             CURLOPT_HTTPHEADER => [
                 'Content-Type: application/json',
-                'Accept: application/json',
-                // FreeAstroAPI auth: https://www.freeastroapi.com/docs/auth
+                'Accept: ' . $accept,
                 'x-api-key: ' . $this->apiKey,
             ],
             CURLOPT_POSTFIELDS => json_encode($payload, JSON_THROW_ON_ERROR),
@@ -206,19 +390,42 @@ final class AstroService
         $curlError = curl_error($ch);
         curl_close($ch);
 
-        if ($httpCode !== 200 || $response === false || $response === '') {
-            return [
-                'error' => true,
-                'message' => $curlError !== '' ? $curlError : 'Error al consultar la API',
-                'http_code' => $httpCode,
-            ];
+        return [
+            'http_code' => $httpCode,
+            'body' => is_string($response) ? $response : '',
+            'error' => $curlError,
+        ];
+    }
+
+    private function chartCacheDir(): string
+    {
+        return dirname(__DIR__, 2) . '/storage/cache';
+    }
+
+    private function readChartCache(string $fileName): ?string
+    {
+        $path = $this->chartCacheDir() . '/' . $fileName;
+        if (!is_readable($path)) {
+            return null;
         }
+        $ttl = (int) ($this->config['astro_api']['chart_cache_seconds'] ?? 900);
+        if ($ttl > 0 && (time() - (int) filemtime($path)) > $ttl) {
+            return null;
+        }
+        $svg = file_get_contents($path);
+        return is_string($svg) && str_contains($svg, '<svg') ? $svg : null;
+    }
 
-        $data = json_decode($response, true);
-
-        return is_array($data)
-            ? $data
-            : ['error' => true, 'message' => 'Respuesta inválida', 'http_code' => $httpCode];
+    private function writeChartCache(string $fileName, string $svg, int $ttl): void
+    {
+        if ($ttl <= 0) {
+            return;
+        }
+        $dir = $this->chartCacheDir();
+        if (!is_dir($dir)) {
+            @mkdir($dir, 0775, true);
+        }
+        @file_put_contents($dir . '/' . $fileName, $svg);
     }
 
     private function fetchDailySkyFromApi(\DateTimeImmutable $moment): DailySky

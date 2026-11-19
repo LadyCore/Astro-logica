@@ -26,13 +26,19 @@ return [
     'astro_api' => [
         'base_url' => rtrim((string) $env('FREEASTROAPI_BASE_URL', 'https://api.freeastroapi.com'), '/'),
         'api_key' => $apiKey ? (string) $apiKey : null,
-        'timeout' => 15,
+        'timeout' => 20,
         'ephemeris_path' => '/api/v1/ephemeris/calculate',
         'natal_path' => '/api/v1/natal/calculate',
+        'chart_svg_path' => '/api/v1/natal/chart/',
         'bodies' => [
             'Sun', 'Moon', 'Mercury', 'Venus', 'Mars',
             'Jupiter', 'Saturn', 'Uranus', 'Neptune', 'Pluto',
         ],
+        // Default location for "Cielo del día" wheel (Buenos Aires)
+        'sky_city' => (string) $env('ASTRO_SKY_CITY', 'Buenos Aires'),
+        'sky_lat' => (float) $env('ASTRO_SKY_LAT', -34.6037),
+        'sky_lng' => (float) $env('ASTRO_SKY_LNG', -58.3816),
+        'chart_cache_seconds' => (int) $env('ASTRO_CHART_CACHE_SECONDS', 900),
     ],
 
     'database' => require __DIR__ . '/database.php',

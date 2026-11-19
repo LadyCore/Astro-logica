@@ -1,5 +1,6 @@
 <?php
 /** @var \App\Models\DailySky $sky */
+/** @var string|null $chartSvg */
 /** @var string $momentLabel */
 /** @var bool $usingLiveApi */
 /** @var bool $showDemoNoKeyBadge */
@@ -177,16 +178,22 @@ $interpFor = static function ($body) use ($interpretations): string {
 ?>
 
 <div class="hoy-shell">
-  <aside class="hoy-art" aria-hidden="true">
+  <aside class="hoy-art<?= !empty($chartSvg) ? ' has-chart' : '' ?>" <?= empty($chartSvg) ? 'aria-hidden="true"' : 'aria-label="Carta del cielo de hoy"' ?>>
     <div class="hoy-art-frame">
-      <img
-        src="/assets/img/mystic-woman-profile.jpg"
-        alt=""
-        class="mystic-portrait"
-        width="768"
-        height="1408"
-        decoding="async"
-      >
+      <?php if (!empty($chartSvg)): ?>
+        <div class="hoy-sky-chart">
+          <?= $chartSvg /* trusted SVG from FreeAstroAPI server-side */ ?>
+        </div>
+      <?php else: ?>
+        <img
+          src="/assets/img/mystic-woman-profile.jpg"
+          alt=""
+          class="mystic-portrait"
+          width="768"
+          height="1408"
+          decoding="async"
+        >
+      <?php endif; ?>
       <div class="hoy-art-fade"></div>
       <div class="hoy-art-glow"></div>
     </div>

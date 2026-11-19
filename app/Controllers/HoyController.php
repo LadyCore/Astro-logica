@@ -16,6 +16,15 @@ final class HoyController extends Controller
         $astro = new AstroService($this->config);
         $sky = $astro->getDailySky();
 
+        // Chart SVG is a second API call (free tier ≈ 1 rps); brief pause if live.
+        $chartSvg = null;
+        if ($astro->hasApiKey()) {
+            if ($sky->source === 'api') {
+                usleep(1_100_000);
+            }
+            $chartSvg = $astro->getDailySkyChartSvg($sky->moment, 'ivory-ink');
+        }
+
         $formatter = new \IntlDateFormatter(
             'es_AR',
             \IntlDateFormatter::FULL,
@@ -38,6 +47,7 @@ final class HoyController extends Controller
         $this->view('hoy/index', [
             'title' => 'Cielo del día',
             'sky' => $sky,
+            'chartSvg' => $chartSvg,
             'momentLabel' => \mb_strtoupper($momentLabel, 'UTF-8'),
             'usingLiveApi' => $usingLiveApi,
             'showDemoNoKeyBadge' => $showDemoNoKeyBadge,
