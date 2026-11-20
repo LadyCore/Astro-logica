@@ -106,6 +106,10 @@ return [
         'gap' => 12,
         'size' => 10.5,
         'color' => [110, 62, 48],
+        // Small gold glyphs beside each contact line (site gold accent).
+        'icon_gold' => [201, 162, 39],
+        'icon_size' => 4.2,
+        'icon_gap' => 2.4,
         'left_x' => 36,
         'width' => 214,
     ],

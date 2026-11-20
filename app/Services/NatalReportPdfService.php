@@ -292,15 +292,86 @@ final class NatalReportPdfService
         $gap = (float) ($cfg['gap'] ?? 12);
         $size = (float) ($cfg['size'] ?? 10.5);
         $color = $this->rgb($cfg['color'] ?? [110, 62, 48]);
+        $gold = $this->rgb($cfg['icon_gold'] ?? [201, 162, 39]);
+        $iconSize = (float) ($cfg['icon_size'] ?? 4.2);
+        $iconGap = (float) ($cfg['icon_gap'] ?? 2.4);
         $instagram = (string) ($cfg['instagram'] ?? '@astrologica5');
         $email = (string) ($cfg['email'] ?? 'astro.logica.uge@gmail.com');
 
-        $pdf->SetTextColor(...$color);
         $pdf->SetFont('dejavusans', '', $size);
-        $pdf->SetXY($x, $y);
-        $pdf->Cell($w, 5, $instagram, 0, 0, 'C');
-        $pdf->SetXY($x, $y + $gap);
-        $pdf->Cell($w, 5, $email, 0, 0, 'C');
+        $this->stampContactLine($pdf, $x, $w, $y, $instagram, $color, $gold, $iconSize, $iconGap, 'instagram');
+        $this->stampContactLine($pdf, $x, $w, $y + $gap, $email, $color, $gold, $iconSize, $iconGap, 'email');
+    }
+
+    /**
+     * Centered contact line with a small gold glyph to the left of the text.
+     *
+     * @param array{0:int,1:int,2:int} $textColor
+     * @param array{0:int,1:int,2:int} $gold
+     */
+    private function stampContactLine(
+        Fpdi $pdf,
+        float $x,
+        float $w,
+        float $y,
+        string $text,
+        array $textColor,
+        array $gold,
+        float $iconSize,
+        float $iconGap,
+        string $glyph,
+    ): void {
+        $textW = $pdf->GetStringWidth($text);
+        $total = $iconSize + $iconGap + $textW;
+        $startX = $x + (($w - $total) / 2);
+        $iconY = $y + 0.35;
+
+        if ($glyph === 'instagram') {
+            $this->drawInstagramGlyph($pdf, $startX, $iconY, $iconSize, $gold);
+        } else {
+            $this->drawEnvelopeGlyph($pdf, $startX, $iconY, $iconSize, $gold);
+        }
+
+        $pdf->SetTextColor(...$textColor);
+        $pdf->SetXY($startX + $iconSize + $iconGap, $y);
+        $pdf->Cell($textW + 1, 5, $text, 0, 0, 'L');
+    }
+
+    /**
+     * Tiny Instagram-style camera glyph (rounded square + lens) in gold.
+     *
+     * @param array{0:int,1:int,2:int} $gold
+     */
+    private function drawInstagramGlyph(Fpdi $pdf, float $x, float $y, float $size, array $gold): void
+    {
+        $pdf->SetDrawColor(...$gold);
+        $pdf->SetLineWidth(0.35);
+        // Body
+        $pdf->RoundedRect($x, $y, $size, $size, $size * 0.22, '1111', 'D');
+        // Lens
+        $cx = $x + ($size / 2);
+        $cy = $y + ($size / 2);
+        $r = $size * 0.22;
+        $pdf->Circle($cx, $cy, $r, 0, 360, 'D');
+        // Viewfinder dot
+        $pdf->Circle($x + ($size * 0.72), $y + ($size * 0.28), $size * 0.06, 0, 360, 'F', [], $gold);
+    }
+
+    /**
+     * Tiny envelope glyph in gold.
+     *
+     * @param array{0:int,1:int,2:int} $gold
+     */
+    private function drawEnvelopeGlyph(Fpdi $pdf, float $x, float $y, float $size, array $gold): void
+    {
+        $pdf->SetDrawColor(...$gold);
+        $pdf->SetLineWidth(0.35);
+        $h = $size * 0.72;
+        $top = $y + (($size - $h) / 2);
+        $pdf->Rect($x, $top, $size, $h, 'D');
+        // Flap
+        $pdf->Line($x, $top, $x + ($size / 2), $top + ($h * 0.55));
+        $pdf->Line($x + $size, $top, $x + ($size / 2), $top + ($h * 0.55));
     }
 
     /**
