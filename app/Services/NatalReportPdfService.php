@@ -10,15 +10,15 @@ use RuntimeException;
 use setasign\Fpdi\Tcpdf\Fpdi;
 
 /**
- * Builds a natal-chart PDF by stamping dynamic data onto a Canva PDF template (FPDI + TCPDF).
+ * Natal PDF from the Canva template (FPDI + TCPDF).
  *
- * Page order:
- *   1–2. Plantilla Canva intacta (portada + intro) — sin datos del usuario
- *   3.   Datos del consultante (marco en blanco)
- *   4.   Gráfico de la carta natal (SVG → PNG)
- *   5+.  Interpretación (posiciones + textos cortos)
+ * HARD RULE: Pages 1–2 are pure Canva imports — no text/image overlays, no slogan footer.
  *
- * Template: storage/templates/reporte-cn.pdf — tune coords in config/natal_report.php.
+ * Content order:
+ *   3. Chart + consultante data (nombre, fecha, hora, lugar) + slogan footer
+ *   4. All interpretations + Instagram/email + slogan footer
+ *
+ * Coords: config/natal_report.php
  */
 final class NatalReportPdfService
 {
@@ -31,7 +31,7 @@ final class NatalReportPdfService
     private array $tempFiles = [];
 
     /**
-     * @param array<string, mixed> $config Full app config (or at least natal_report + timezone).
+     * @param array<string, mixed> $config
      */
     public function __construct(private readonly array $config)
     {
@@ -56,10 +56,8 @@ final class NatalReportPdfService
     }
 
     /**
-     * @param array<string, mixed> $birth Normalized birth payload (name, year, month, day, …).
-     * @param list<PlanetPosition> $bodies Ordered planet positions for the report.
-     * @param string|null $chartSvg Natal wheel SVG markup (Ivory Ink), optional.
-     * @return string Raw PDF binary
+     * @param array<string, mixed> $birth
+     * @param list<PlanetPosition> $bodies
      */
     public function generate(array $birth, array $bodies, string $locale = 'es', ?string $chartSvg = null): string
     {
@@ -70,14 +68,11 @@ final class NatalReportPdfService
         }
 
         $locale = $locale === 'en' ? 'en' : 'es';
-        $pdf = new Fpdi('P', 'mm', 'A4', true, 'UTF-8', false);
-        $pdf->setPrintHeader(false);
-        $pdf->setPrintFooter(false);
-        $pdf->SetAutoPageBreak(false, 0);
-        $pdf->SetCreator('Astro-lógica');
-        $pdf->SetAuthor('Astro-lógica');
+        $pdf = $this->newPdf();
         $name = (string) ($birth['name'] ?? 'Consultante');
         $pdf->SetTitle(($locale === 'en' ? 'Natal Chart — ' : 'Carta Natal — ') . $name);
+        $pdf->SetCreator('Astro-lógica');
+        $pdf->SetAuthor('Astro-lógica');
         $pdf->SetMargins(0, 0, 0);
 
         $pageCount = $pdf->setSourceFile($this->templatePath);
@@ -86,17 +81,15 @@ final class NatalReportPdfService
         }
 
         try {
-            // Hojas 1–2: Canva tal cual (portada + intro). Sin overlays.
+            // Pages 1–2: Canva ONLY — never stamp overlays/footer here.
             $this->addTemplatePage($pdf, 1);
             if ($pageCount >= 2) {
                 $this->addTemplatePage($pdf, 2);
             }
 
-            // A partir de la 3.ª hoja (marcos en blanco):
-            // datos → gráfico → interpretación.
-            $this->stampIdentity($pdf, $birth, $locale, $pageCount);
-            $this->stampChart($pdf, $chartSvg, $locale, $pageCount);
-            $this->stampPlanets($pdf, $bodies, $locale, $pageCount);
+            // Page 3+: dynamic content on blank frames.
+            $this->stampChartAndIdentity($pdf, $birth, $chartSvg, $locale, $pageCount);
+            $this->stampPlanetsAndContact($pdf, $bodies, $locale, $pageCount);
 
             return $pdf->Output('', 'S');
         } finally {
@@ -105,8 +98,6 @@ final class NatalReportPdfService
     }
 
     /**
-     * Stream PDF as a download response.
-     *
      * @param array<string, mixed> $birth
      * @param list<PlanetPosition> $bodies
      */
@@ -124,76 +115,215 @@ final class NatalReportPdfService
         echo $binary;
     }
 
+    private function newPdf(): Fpdi
+    {
+        $pdf = new class ('P', 'mm', 'A4', true, 'UTF-8', false) extends Fpdi {
+            public function Header(): void
+            {
+            }
+
+            public function Footer(): void
+            {
+            }
+        };
+        $pdf->setPrintHeader(false);
+        $pdf->setPrintFooter(false);
+        $pdf->SetAutoPageBreak(false, 0);
+
+        return $pdf;
+    }
+
     /**
-     * Página 3+ (marco en blanco): datos del consultante.
+     * Page 3: chart on top + nombre / fecha / hora / lugar + slogan footer.
      *
      * @param array<string, mixed> $birth
      */
-    private function stampIdentity(Fpdi $pdf, array $birth, string $locale, int $templatePages): void
-    {
-        $cover = is_array($this->layout['cover'] ?? null) ? $this->layout['cover'] : [];
+    private function stampChartAndIdentity(
+        Fpdi $pdf,
+        array $birth,
+        ?string $chartSvg,
+        string $locale,
+        int $templatePages,
+    ): void {
+        $chartCfg = is_array($this->layout['chart'] ?? null) ? $this->layout['chart'] : [];
+        $identity = is_array($this->layout['identity'] ?? null)
+            ? $this->layout['identity']
+            : (is_array($this->layout['cover'] ?? null) ? $this->layout['cover'] : []);
         $frames = $this->contentFrames($templatePages);
         $this->addTemplatePage($pdf, $frames[0]);
 
-        $headings = is_array($cover['heading'] ?? null) ? $cover['heading'] : [];
-        $headingText = (string) ($headings[$locale] ?? ($locale === 'en' ? 'Consultant' : 'Datos del consultante'));
-        $x = (float) (($cover['name']['x'] ?? null) ?? 32);
-        $w = (float) (($cover['name']['w'] ?? null) ?? 222);
-        $headingY = (float) ($cover['heading_y'] ?? 48);
-        $headingSize = (float) ($cover['heading_size'] ?? 20);
-        $headingColor = $this->rgb($cover['heading_color'] ?? [28, 24, 68]);
-        $this->stampSectionHeading($pdf, $headingText, $x, $w, $headingY, $headingSize, $headingColor);
+        $x = (float) ($chartCfg['svg_x'] ?? 48);
+        $w = (float) ($chartCfg['svg_w'] ?? 190);
+        $headings = is_array($chartCfg['heading'] ?? null) ? $chartCfg['heading'] : [];
+        $headingText = (string) ($headings[$locale] ?? ($locale === 'en' ? 'Your Natal Chart' : 'Tu Carta Natal'));
+        $this->stampSectionHeading(
+            $pdf,
+            $headingText,
+            $x,
+            $w,
+            (float) ($chartCfg['heading_y'] ?? 22),
+            (float) ($chartCfg['heading_size'] ?? 16),
+            $this->rgb($chartCfg['heading_color'] ?? [28, 24, 68]),
+        );
+
+        $svg = is_string($chartSvg) ? trim($chartSvg) : '';
+        $y = (float) ($chartCfg['svg_y'] ?? 38);
+        $h = (float) ($chartCfg['svg_h'] ?? 190);
+
+        if ($svg === '' || !str_contains($svg, '<svg')) {
+            $this->stampChartMissing($pdf, $chartCfg, $locale, $x, $y, $w);
+        } else {
+            $png = $this->rasterizeSvgToPng($svg);
+            if ($png !== null) {
+                $pdf->Image($png, $x, $y, $w, $h, 'PNG', '', '', false, 300, '', false, false, 0, false, false, true);
+            } elseif (function_exists('xml_parser_create')) {
+                $path = $this->writeTempSvg($svg);
+                $pdf->ImageSVG($path, $x, $y, $w, $h, '', '', '', 0, true);
+            } else {
+                $this->stampChartMissing($pdf, $chartCfg, $locale, $x, $y, $w);
+            }
+        }
 
         $name = (string) ($birth['name'] ?? ($locale === 'en' ? 'Guest' : 'Consultante'));
-        $date = $this->formatBirthDate($birth, $locale);
+        $date = $this->formatBirthDateOnly($birth, $locale);
+        $time = $this->formatBirthTimeOnly($birth, $locale);
         $place = trim((string) ($birth['city'] ?? ''));
         if ($place === '') {
             $place = $locale === 'en' ? 'Location not set' : 'Lugar no indicado';
         }
 
-        $this->writeField($pdf, $cover['name'] ?? [], $name);
-        $this->writeField($pdf, $cover['birth_date'] ?? [], $date);
-        $this->writeField($pdf, $cover['place'] ?? [], $place);
+        $this->writeField($pdf, $identity['name'] ?? [], $name);
+        $this->writeField($pdf, $identity['birth_date'] ?? [], $date);
+        $this->writeField($pdf, $identity['birth_time'] ?? [], $time);
+        $this->writeField($pdf, $identity['place'] ?? [], $place);
+
+        $this->stampSloganFooter($pdf);
     }
 
-    private function stampChart(Fpdi $pdf, ?string $chartSvg, string $locale, int $templatePages): void
+    /**
+     * Page 4: all planet interpretations + contact + slogan footer (single page).
+     *
+     * @param list<PlanetPosition> $bodies
+     */
+    private function stampPlanetsAndContact(Fpdi $pdf, array $bodies, string $locale, int $templatePages): void
     {
-        $cfg = is_array($this->layout['chart'] ?? null) ? $this->layout['chart'] : [];
-        $frames = $this->contentFrames($templatePages);
-        $this->addTemplatePage($pdf, $frames[0]);
+        if ($bodies === []) {
+            return;
+        }
 
-        $headings = is_array($cfg['heading'] ?? null) ? $cfg['heading'] : [];
-        $headingText = (string) ($headings[$locale] ?? ($locale === 'en' ? 'Your Natal Chart' : 'Tu Carta Natal'));
-        $x = (float) ($cfg['svg_x'] ?? 28);
-        $w = (float) ($cfg['svg_w'] ?? 230);
-        $headingY = (float) ($cfg['heading_y'] ?? 28);
-        $headingSize = (float) ($cfg['heading_size'] ?? 20);
+        $cfg = is_array($this->layout['planets'] ?? null) ? $this->layout['planets'] : [];
+        $startY = (float) ($cfg['start_y'] ?? 42);
+        $bottomY = (float) ($cfg['bottom_y'] ?? 300);
+        $x = (float) ($cfg['left_x'] ?? 34);
+        $w = (float) ($cfg['width'] ?? 218);
+        $titleSize = (float) ($cfg['title_size'] ?? 10);
+        $bodySize = (float) ($cfg['body_size'] ?? 9);
+        $noteSize = (float) ($cfg['note_size'] ?? 8.5);
+        $titleColor = $this->rgb($cfg['title_color'] ?? [28, 24, 68]);
+        $metaColor = $this->rgb($cfg['meta_color'] ?? [130, 72, 48]);
+        $noteColor = $this->rgb($cfg['note_color'] ?? [48, 44, 62]);
+        $headingY = (float) ($cfg['heading_y'] ?? 20);
+        $headingSize = (float) ($cfg['heading_size'] ?? 15);
+        $subY = (float) ($cfg['subheading_y'] ?? 31);
+        $subSize = (float) ($cfg['subheading_size'] ?? 10.5);
         $headingColor = $this->rgb($cfg['heading_color'] ?? [28, 24, 68]);
+        $headings = is_array($cfg['heading'] ?? null) ? $cfg['heading'] : [];
+        $subheadings = is_array($cfg['subheading'] ?? null) ? $cfg['subheading'] : [];
+        $headingText = (string) ($headings[$locale] ?? ($locale === 'en' ? 'Interpretation' : 'Interpretación'));
+        $subText = (string) ($subheadings[$locale] ?? ($locale === 'en' ? 'Planetary positions' : 'Posiciones planetarias'));
+
+        $count = count($bodies);
+        $available = max(80.0, $bottomY - $startY);
+        $lineH = $count > 0 ? min(28.0, max(17.5, $available / $count)) : 22.0;
+
+        $frames = $this->contentFrames($templatePages);
+        // Prefer second blank frame for interpretation when available.
+        $frame = $frames[count($frames) > 1 ? 1 : 0];
+        $this->addTemplatePage($pdf, $frame);
         $this->stampSectionHeading($pdf, $headingText, $x, $w, $headingY, $headingSize, $headingColor);
+        $this->stampSectionHeading($pdf, $subText, $x, $w, $subY, $subSize, $metaColor);
 
-        $svg = is_string($chartSvg) ? trim($chartSvg) : '';
-        $y = (float) ($cfg['svg_y'] ?? 52);
-        $h = (float) ($cfg['svg_h'] ?? 230);
+        $y = $startY;
+        foreach ($bodies as $body) {
+            $id = strtolower($body->id);
+            $name = PlanetMeanings::bodyName($id, $locale);
+            $sign = PlanetMeanings::signName($body->signId, $locale);
+            $glyph = PlanetMeanings::BODY_GLYPH[$id] ?? '·';
+            $signGlyph = PlanetMeanings::SIGN_GLYPH[strtolower($body->signId)] ?? '';
+            $degree = $body->degreeFormatted();
+            $rx = $body->retrograde ? ' Rx' : '';
+            $note = PlanetMeanings::forBody($body, $locale);
 
-        if ($svg === '' || !str_contains($svg, '<svg')) {
-            $this->stampChartMissing($pdf, $cfg, $locale, $x, $y, $w);
-            return;
+            $pdf->SetTextColor(...$titleColor);
+            $pdf->SetFont('dejavusans', 'B', $titleSize);
+            $pdf->SetXY($x, $y);
+            $pdf->Cell($w * 0.36, 4.2, sprintf('%s  %s', $glyph, $name), 0, 0, 'L', false, '', 0, false, 'T', 'M');
+
+            $pdf->SetTextColor(...$metaColor);
+            $pdf->SetFont('dejavusans', '', $bodySize);
+            $pdf->SetXY($x + ($w * 0.36), $y);
+            $pdf->Cell(
+                $w * 0.64,
+                4.2,
+                trim(sprintf('%s %s  %s%s', $signGlyph, $sign, $degree, $rx)),
+                0,
+                0,
+                'L'
+            );
+
+            $pdf->SetTextColor(...$noteColor);
+            $pdf->SetFont('dejavusans', '', $noteSize);
+            $pdf->SetXY($x, $y + 4.8);
+            $pdf->MultiCell($w, 3.6, $note, 0, 'L', false, 1);
+
+            $y += $lineH;
         }
 
-        // Prefer PNG rasterization (cleaner than TCPDF's SVG parser on FreeAstroAPI wheels).
-        $png = $this->rasterizeSvgToPng($svg);
-        if ($png !== null) {
-            $pdf->Image($png, $x, $y, $w, $h, 'PNG', '', '', false, 300, '', false, false, 0, false, false, true);
-            return;
-        }
+        $this->stampContact($pdf);
+        $this->stampSloganFooter($pdf);
+    }
 
-        if (function_exists('xml_parser_create')) {
-            $path = $this->writeTempSvg($svg);
-            $pdf->ImageSVG($path, $x, $y, $w, $h, '', '', '', 0, true);
-            return;
-        }
+    private function stampContact(Fpdi $pdf): void
+    {
+        $cfg = is_array($this->layout['contact'] ?? null) ? $this->layout['contact'] : [];
+        $x = (float) ($cfg['left_x'] ?? 36);
+        $w = (float) ($cfg['width'] ?? 214);
+        $y = (float) ($cfg['y'] ?? 308);
+        $gap = (float) ($cfg['gap'] ?? 12);
+        $size = (float) ($cfg['size'] ?? 10.5);
+        $color = $this->rgb($cfg['color'] ?? [110, 62, 48]);
+        $instagram = (string) ($cfg['instagram'] ?? '@astrologica5');
+        $email = (string) ($cfg['email'] ?? 'astro.logica.uge@gmail.com');
 
-        $this->stampChartMissing($pdf, $cfg, $locale, $x, $y, $w);
+        $pdf->SetTextColor(...$color);
+        $pdf->SetFont('dejavusans', '', $size);
+        $pdf->SetXY($x, $y);
+        $pdf->Cell($w, 5, $instagram, 0, 0, 'C');
+        $pdf->SetXY($x, $y + $gap);
+        $pdf->Cell($w, 5, $email, 0, 0, 'C');
+    }
+
+    /**
+     * Site slogan footer — content pages only (never pages 1–2).
+     */
+    private function stampSloganFooter(Fpdi $pdf): void
+    {
+        $cfg = is_array($this->layout['footer'] ?? null) ? $this->layout['footer'] : [];
+        $slogan = (string) ($cfg['slogan'] ?? 'Con los Pies en la Tierra y el Corazón en las Estrellas');
+        $brand = (string) ($cfg['brand'] ?? 'Astro-lógica');
+        $x = (float) ($cfg['left_x'] ?? 36);
+        $w = (float) ($cfg['width'] ?? 214);
+        $y = (float) ($cfg['y'] ?? 342);
+
+        $pdf->SetTextColor(...$this->rgb($cfg['brand_color'] ?? [28, 24, 68]));
+        $pdf->SetFont('dejavusans', 'B', (float) ($cfg['brand_size'] ?? 8));
+        $pdf->SetXY($x, $y);
+        $pdf->Cell($w, 4, $brand, 0, 0, 'C');
+
+        $pdf->SetTextColor(...$this->rgb($cfg['color'] ?? [90, 78, 64]));
+        $pdf->SetFont('dejavusans', 'I', (float) ($cfg['size'] ?? 8.5));
+        $pdf->SetXY($x, $y + 5);
+        $pdf->Cell($w, 4, $slogan, 0, 0, 'C');
     }
 
     /**
@@ -211,9 +341,6 @@ final class NatalReportPdfService
         $pdf->MultiCell($w, 6, $msg, 0, 'C');
     }
 
-    /**
-     * Rasterize SVG → PNG via PyMuPDF when available (best fidelity for natal wheels).
-     */
     private function rasterizeSvgToPng(string $svg): ?string
     {
         $svgPath = $this->writeTempSvg($svg);
@@ -236,92 +363,6 @@ PY;
         }
         $this->tempFiles[] = $pngPath;
         return $pngPath;
-    }
-
-    /**
-     * @param list<PlanetPosition> $bodies
-     */
-    private function stampPlanets(Fpdi $pdf, array $bodies, string $locale, int $templatePages): void
-    {
-        if ($bodies === []) {
-            return;
-        }
-
-        $cfg = is_array($this->layout['planets'] ?? null) ? $this->layout['planets'] : [];
-        $startY = (float) ($cfg['start_y'] ?? 54);
-        $lineH = (float) ($cfg['line_height'] ?? 28);
-        $x = (float) ($cfg['left_x'] ?? 36);
-        $w = (float) ($cfg['width'] ?? 214);
-        $max = max(1, (int) ($cfg['max_lines_per_page'] ?? 9));
-        $titleSize = (float) ($cfg['title_size'] ?? 13);
-        $bodySize = (float) ($cfg['body_size'] ?? 12);
-        $noteSize = (float) ($cfg['note_size'] ?? 11);
-        $titleColor = $this->rgb($cfg['title_color'] ?? [28, 24, 68]);
-        $metaColor = $this->rgb($cfg['meta_color'] ?? [130, 72, 48]);
-        $noteColor = $this->rgb($cfg['note_color'] ?? [48, 44, 62]);
-        $headingY = (float) ($cfg['heading_y'] ?? 26);
-        $headingSize = (float) ($cfg['heading_size'] ?? 20);
-        $subY = (float) ($cfg['subheading_y'] ?? 40);
-        $subSize = (float) ($cfg['subheading_size'] ?? 13);
-        $headingColor = $this->rgb($cfg['heading_color'] ?? [28, 24, 68]);
-        $headings = is_array($cfg['heading'] ?? null) ? $cfg['heading'] : [];
-        $subheadings = is_array($cfg['subheading'] ?? null) ? $cfg['subheading'] : [];
-        $headingText = (string) ($headings[$locale] ?? ($locale === 'en' ? 'Interpretation' : 'Interpretación'));
-        $subText = (string) ($subheadings[$locale] ?? ($locale === 'en' ? 'Planetary positions' : 'Posiciones planetarias'));
-
-        $frames = $this->contentFrames($templatePages);
-        $frameIdx = 0;
-        $this->addTemplatePage($pdf, $frames[$frameIdx]);
-        $this->stampSectionHeading($pdf, $headingText, $x, $w, $headingY, $headingSize, $headingColor);
-        $this->stampSectionHeading($pdf, $subText, $x, $w, $subY, $subSize, $metaColor);
-
-        $y = $startY;
-        $linesOnPage = 0;
-
-        foreach ($bodies as $body) {
-            if ($linesOnPage >= $max) {
-                $frameIdx = ($frameIdx + 1) % count($frames);
-                $this->addTemplatePage($pdf, $frames[$frameIdx]);
-                $this->stampSectionHeading($pdf, $headingText, $x, $w, $headingY, $headingSize, $headingColor);
-                $this->stampSectionHeading($pdf, $subText, $x, $w, $subY, $subSize, $metaColor);
-                $y = $startY;
-                $linesOnPage = 0;
-            }
-
-            $id = strtolower($body->id);
-            $name = PlanetMeanings::bodyName($id, $locale);
-            $sign = PlanetMeanings::signName($body->signId, $locale);
-            $glyph = PlanetMeanings::BODY_GLYPH[$id] ?? '·';
-            $signGlyph = PlanetMeanings::SIGN_GLYPH[strtolower($body->signId)] ?? '';
-            $degree = $body->degreeFormatted();
-            $rx = $body->retrograde ? ' Rx' : '';
-            $note = PlanetMeanings::forBody($body, $locale);
-
-            $pdf->SetTextColor(...$titleColor);
-            $pdf->SetFont('dejavusans', 'B', $titleSize);
-            $pdf->SetXY($x, $y);
-            $pdf->Cell($w, 5.5, sprintf('%s  %s', $glyph, $name), 0, 0, 'L', false, '', 0, false, 'T', 'M');
-
-            $pdf->SetTextColor(...$metaColor);
-            $pdf->SetFont('dejavusans', '', $bodySize);
-            $pdf->SetXY($x, $y + 6.2);
-            $pdf->Cell(
-                $w,
-                5,
-                trim(sprintf('%s %s  %s%s', $signGlyph, $sign, $degree, $rx)),
-                0,
-                0,
-                'L'
-            );
-
-            $pdf->SetTextColor(...$noteColor);
-            $pdf->SetFont('dejavusans', '', $noteSize);
-            $pdf->SetXY($x, $y + 12.2);
-            $pdf->MultiCell($w, 4.4, $note, 0, 'L', false, 1);
-
-            $y += $lineH;
-            $linesOnPage++;
-        }
     }
 
     /**
@@ -416,7 +457,6 @@ PY;
             mkdir($dir, 0775, true);
         }
         $path = $dir . '/natal-pdf-' . bin2hex(random_bytes(8)) . '.svg';
-        // Ensure XML declaration for TCPDF's SVG parser.
         if (!str_starts_with($svg, '<?xml')) {
             $svg = '<?xml version="1.0" encoding="UTF-8"?>' . "\n" . $svg;
         }
@@ -440,34 +480,40 @@ PY;
     /**
      * @param array<string, mixed> $birth
      */
-    private function formatBirthDate(array $birth, string $locale): string
+    private function formatBirthDateOnly(array $birth, string $locale): string
     {
         $y = (int) ($birth['year'] ?? 0);
         $m = (int) ($birth['month'] ?? 0);
         $d = (int) ($birth['day'] ?? 0);
-        $h = (int) ($birth['hour'] ?? 0);
-        $min = (int) ($birth['minute'] ?? 0);
         if ($y < 1 || $m < 1 || $d < 1) {
             return $locale === 'en' ? 'Date unknown' : 'Fecha desconocida';
         }
-
         try {
-            $dt = new \DateTimeImmutable(sprintf('%04d-%02d-%02d %02d:%02d:00', $y, $m, $d, $h, $min));
+            $dt = new \DateTimeImmutable(sprintf('%04d-%02d-%02d', $y, $m, $d));
         } catch (\Throwable) {
             return sprintf('%02d/%02d/%04d', $d, $m, $y);
         }
-
         if ($locale === 'en') {
-            return $dt->format('F j, Y · H:i');
+            return $dt->format('F j, Y');
         }
-
         $months = [
             1 => 'enero', 2 => 'febrero', 3 => 'marzo', 4 => 'abril',
             5 => 'mayo', 6 => 'junio', 7 => 'julio', 8 => 'agosto',
             9 => 'septiembre', 10 => 'octubre', 11 => 'noviembre', 12 => 'diciembre',
         ];
         $monthName = $months[(int) $dt->format('n')] ?? $dt->format('m');
-        return sprintf('%d de %s de %s · %s', (int) $dt->format('j'), $monthName, $dt->format('Y'), $dt->format('H:i'));
+        return sprintf('%d de %s de %s', (int) $dt->format('j'), $monthName, $dt->format('Y'));
+    }
+
+    /**
+     * @param array<string, mixed> $birth
+     */
+    private function formatBirthTimeOnly(array $birth, string $locale): string
+    {
+        $h = (int) ($birth['hour'] ?? 0);
+        $min = (int) ($birth['minute'] ?? 0);
+        $label = $locale === 'en' ? 'Time' : 'Hora';
+        return sprintf('%s · %02d:%02d', $label, $h, $min);
     }
 
     /**
