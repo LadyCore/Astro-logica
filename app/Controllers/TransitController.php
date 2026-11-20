@@ -58,7 +58,7 @@ final class TransitController extends Controller
         $this->view('cartas/transitos', [
             'title' => $this->t('transit.title'),
             'pageClass' => 'page-cartas page-transitos',
-            'activeNav' => 'transitos',
+            'activeNav' => 'cartas',
             'activeCard' => 'transitos',
             'form' => $form,
             'submitted' => $submitted,
