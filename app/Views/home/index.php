@@ -262,15 +262,33 @@ $interpFor = static function ($body) use ($interpretations): string {
 
   <section class="home-season" aria-labelledby="home-season-title">
     <div class="home-season-glyph" aria-hidden="true">
-      <span class="season-sign"><?= htmlspecialchars($season['glyph'], ENT_QUOTES, 'UTF-8') ?></span>
+      <?php if (($season['slug'] ?? '') === 'scorpio'): ?>
+        <svg class="season-scorpion" viewBox="0 0 140 140" width="120" height="120" fill="none">
+          <ellipse cx="70" cy="78" rx="46" ry="18" stroke="currentColor" stroke-width="1" opacity=".25"/>
+          <path d="M34 72c10-22 28-34 36-34 8 0 26 12 36 34" stroke="currentColor" stroke-width="1.6" opacity=".5"/>
+          <path d="M48 70c7-12 15-18 22-18s15 6 22 18" stroke="currentColor" stroke-width="1.35" opacity=".55"/>
+          <path d="M58 84c3-12 7-20 12-20s9 8 12 20" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+          <path d="M54 88c-12 3-22 12-24 22M86 88c12 3 22 12 24 22" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+          <path d="M46 110c-7 5-10 12-8 18M94 110c7 5 10 12 8 18" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+          <path d="M44 128h4M92 128h4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+          <path d="M70 64v-14c0-10 5-18 13-22 5-2.5 10 2.5 7.5 7.5-2.5 5-8 7.5-12.5 10" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+          <circle cx="88" cy="34" r="4.5" fill="currentColor"/>
+          <path d="M88 29.5 94 20M88 29.5 82 20" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+          <circle cx="70" cy="80" r="3.5" fill="currentColor"/>
+          <circle cx="58" cy="76" r="1.6" fill="currentColor" opacity=".7"/>
+          <circle cx="82" cy="76" r="1.6" fill="currentColor" opacity=".7"/>
+        </svg>
+      <?php else: ?>
+        <span class="season-sign"><?= htmlspecialchars($season['glyph'], ENT_QUOTES, 'UTF-8') ?></span>
+      <?php endif; ?>
     </div>
     <div class="home-season-copy">
       <p class="eyebrow">Temporada zodiacal</p>
       <h2 id="home-season-title">Temporada de <?= htmlspecialchars($season['name'], ENT_QUOTES, 'UTF-8') ?></h2>
       <p class="home-season-range"><?= htmlspecialchars($season['range'], ENT_QUOTES, 'UTF-8') ?></p>
-      <p class="home-season-blurb"><?= htmlspecialchars($season['blurb'], ENT_QUOTES, 'UTF-8') ?></p>
     </div>
     <div class="home-season-cta">
+      <p class="home-season-blurb"><?= htmlspecialchars($season['blurb'], ENT_QUOTES, 'UTF-8') ?></p>
       <a class="btn btn-outline" href="/hoy">Leer la guía del ciclo <span aria-hidden="true">→</span></a>
     </div>
   </section>
