@@ -920,18 +920,17 @@ body.page-hoy .site-header {
   border-radius: 999px;
 }
 
-/* Above-fold stack fills the right pane; outer planets scroll below */
+/* Above-fold stack: content-sized so planet cards never crush/overlap.
+   Outer planets still sit below; the panel scrolls via .hoy-content. */
 .hoy-stack {
   flex: 0 0 auto;
   display: flex;
   flex-direction: column;
   gap: clamp(1rem, 2.2vh, 1.75rem);
   box-sizing: border-box;
-  /* Peek Saturno under the fold without a large empty band */
-  --hoy-peek: clamp(2.75rem, 4.5vh, 3.25rem);
-  height: calc(100% - var(--hoy-peek));
-  min-height: calc(100% - var(--hoy-peek));
-  max-height: calc(100% - var(--hoy-peek));
+  height: auto;
+  min-height: 0;
+  max-height: none;
 }
 
 .hoy-heading {
@@ -1092,10 +1091,11 @@ body.page-hoy .site-header {
 }
 
 .planet-grid-primary {
-  flex: 1 1 0;
-  grid-template-rows: 1fr 1fr;
-  grid-auto-rows: minmax(0, 1fr);
-  align-content: stretch;
+  flex: 0 0 auto;
+  grid-template-rows: none;
+  grid-auto-rows: auto;
+  align-content: start;
+  align-items: stretch;
   min-height: 0;
 }
 
@@ -1107,9 +1107,10 @@ body.page-hoy .site-header {
 .planet-card {
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  justify-content: flex-start;
   min-height: 0;
-  height: 100%;
+  height: auto;
+  overflow: visible;
   padding: clamp(1.1rem, 2vh, 1.45rem) clamp(1.1rem, 1.5vw, 1.35rem);
   border: 1px solid var(--border);
   border-radius: 0.95rem;
@@ -1192,8 +1193,8 @@ body.page-hoy .site-header {
 }
 
 .planet-grid-primary .planet-note {
-  margin-top: auto;
-  padding-top: 0.55rem;
+  margin-top: 0.55rem;
+  padding-top: 0;
 }
 
 .content-panel {
@@ -1305,13 +1306,15 @@ body.page-hoy .site-header {
   }
 
   .planet-grid-primary {
-    flex: none;
+    flex: 0 0 auto;
     min-height: 0;
+    grid-template-rows: none;
     grid-auto-rows: auto;
   }
 
   .planet-card {
     height: auto;
+    overflow: visible;
   }
 
   .planet-grid-outer {
