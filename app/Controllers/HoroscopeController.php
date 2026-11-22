@@ -7,6 +7,7 @@ namespace App\Controllers;
 use App\Services\AstroService;
 use App\Support\BirthForm;
 use App\Support\HoroscopeLocalizer;
+use App\Support\LiveSkyAligner;
 
 final class HoroscopeController extends Controller
 {
@@ -22,12 +23,21 @@ final class HoroscopeController extends Controller
 
         $horoscope = null;
         $error = null;
+        $sky = null;
         $astro = new AstroService($this->config);
 
         if ($submitted) {
             if (!$astro->hasApiKey()) {
                 $error = $this->t('api.missing');
             } else {
+                // Live sky first — same source / timezone as Cielo del día.
+                $sky = $astro->getDailySky();
+
+                // Soft pause so we don't race the ephemeris call on free-tier 1 rps.
+                if ($sky->source === 'api') {
+                    usleep(1_100_000);
+                }
+
                 // Provider daily-sign languages: en/fr/it/hi (no Spanish). Fetch EN, then localize.
                 $raw = $astro->getDailySignHoroscope((string) $form['sign'], 'today', 'en');
                 if (!empty($raw['error'])) {
@@ -36,9 +46,11 @@ final class HoroscopeController extends Controller
                         : $this->t('api.chart_missing');
                 } else {
                     $data = $raw['data'] ?? $raw;
-                    $horoscope = is_array($data)
-                        ? (new HoroscopeLocalizer())->localize($data, $this->lang())
-                        : null;
+                    if (is_array($data)) {
+                        $localized = (new HoroscopeLocalizer())->localize($data, $this->lang());
+                        // Override canned Moon-in-sign / phase claims with live sky.
+                        $horoscope = (new LiveSkyAligner())->align($localized, $sky, $this->lang());
+                    }
                 }
             }
         }
@@ -51,6 +63,7 @@ final class HoroscopeController extends Controller
             'form' => $form,
             'submitted' => $submitted,
             'horoscope' => $horoscope,
+            'sky' => $sky,
             'error' => $error,
             'apiReady' => $astro->hasApiKey(),
         ]);

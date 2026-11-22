@@ -61,6 +61,7 @@ return [
     'horoscope.pick_sign' => 'Elegí tu signo solar',
     'horoscope.submit' => 'Ver horóscopo de hoy',
     'horoscope.theme' => 'Tema del día: :theme',
+    'horoscope.moon_phase' => 'Fase lunar: :phase',
     'horoscope.overview' => 'Panorama',
     'horoscope.insight' => 'Clave',
     'horoscope.score.overall' => 'General',

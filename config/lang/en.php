@@ -61,6 +61,7 @@ return [
     'horoscope.pick_sign' => 'Choose your sun sign',
     'horoscope.submit' => 'See today’s horoscope',
     'horoscope.theme' => 'Theme of the day: :theme',
+    'horoscope.moon_phase' => 'Moon phase: :phase',
     'horoscope.overview' => 'Overview',
     'horoscope.insight' => 'Insight',
     'horoscope.score.overall' => 'Overall',

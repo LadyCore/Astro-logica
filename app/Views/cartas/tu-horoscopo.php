@@ -2,6 +2,7 @@
 /** @var array<string, mixed> $form */
 /** @var bool $submitted */
 /** @var array<string, mixed>|null $horoscope */
+/** @var \App\Models\DailySky|null $sky */
 /** @var string|null $error */
 /** @var bool $apiReady */
 /** @var callable(string, array=): string $t */
@@ -21,7 +22,8 @@ $overview = (string) (
     ?? $content['summary']
     ?? ''
 );
-$theme = (string) ($content['theme'] ?? '');
+$theme = (string) ($content['theme'] ?? ($horoscope['sky']['moon_theme'] ?? ''));
+$moonPhase = (string) ($content['moon_phase'] ?? ($horoscope['sky']['moon_phase'] ?? ''));
 $keywords = is_array($content['keywords'] ?? null) ? $content['keywords'] : [];
 $insights = is_array($content['supporting_insights'] ?? null) ? $content['supporting_insights'] : [];
 $love = (string) ($content['love'] ?? '');
@@ -66,6 +68,9 @@ $lang = $lang ?? 'es';
         <h2><?= $h(PlanetMeanings::signName($selected, $lang)) ?> <?= PlanetMeanings::SIGN_GLYPH[$selected] ?? '' ?></h2>
         <?php if ($theme !== ''): ?>
           <p class="hoy-sub"><?= $h($t('horoscope.theme', ['theme' => $theme])) ?></p>
+        <?php endif; ?>
+        <?php if ($moonPhase !== ''): ?>
+          <p class="hoy-sub"><?= $h($t('horoscope.moon_phase', ['phase' => $moonPhase])) ?></p>
         <?php endif; ?>
       </div>
 
